@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "511290753895",
+    "project_id": "flokower",
+    "storage_bucket": "flokower.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:511290753895:android:5f2e1d29a36528f35325c2",
+        "android_client_info": {
+          "package_name": "com.example.flokower"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC_woHzhG6coNE0ik17Ig_ovHwOYOM4csc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

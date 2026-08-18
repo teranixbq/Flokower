@@ -1,0 +1,42 @@
+╔══════════════════════════════════════════════════════════╗
+║  FLOKOWER - FIREBASE QUICK START (COPY & PASTE!)       ║
+╚══════════════════════════════════════════════════════════╝
+
+STEP 1: Buat Project Firebase
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Browser → https://console.firebase.google.com/
+→ Click "Add project"
+→ Name: Flokower  
+→ Create project ✅
+
+STEP 2: Download Config File
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Firebase Console → 🤖 icon → Android app
+Package name: com.example.flokower
+Download: google-services.json ✅
+
+STEP 3: Place File di Folder
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Run this command in terminal:
+--------------------------------
+cd ~/Downloads
+mv google-services.json ~/Documents/Flokower/android/app/
+--------------------------------
+
+STEP 4: Install Firebase Packages
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+cd ~/Documents/Flokower
+flutter pub get
+
+STEP 5: Auto-Configure Firebase (SUPER EASY!)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+dart pub global activate flutterfire_cli
+flutterfire configure --project=flokower-app
+
+✅ DONE! Firebase ready!
+
+TEST IT NOW:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+flutter run
+
+That's it! Happy coding! 🎉

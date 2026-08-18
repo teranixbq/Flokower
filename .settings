@@ -1,0 +1,247 @@
+# Flokower - Project Configuration
+
+## 👤 User Information
+
+**Name:** teranixbq  
+**Email:** hanieffathulb03@gmail.com
+
+---
+
+## 🚀 Git Configuration
+
+### Local Setup Commands
+```bash
+cd /path/to/Flokower
+git config user.name "teranixbq"
+git config user.email "hanieffathulb03@gmail.com"
+```
+
+### Auto-apply on First Run
+If you clone this repository, these commands will automatically apply when running `setup.sh` or similar initialization script.
+
+---
+
+## 📱 Mobile Development
+
+**Platform:** Flutter (iOS & Android)  
+**Target:** Minimum Flutter 3.0  
+**Backend:** Firebase  
+
+### Required SDKs
+- Flutter SDK ≥ 3.0.0
+- Dart SDK ≥ 2.18.0
+- Android Studio (for Android development)
+- Xcode (for iOS development, macOS only)
+
+### Recommended Extensions
+**VS Code:**
+- Flutter
+- Dart
+- Flutter Widget Snippets
+- Error Lens
+- Pretty diff
+
+**Android Studio:**
+- Flutter
+- Dart
+- Flutter Enhancement Suite
+
+---
+
+## 🔧 Environment Variables
+
+Create `.env` file in project root:
+
+```bash
+# Firebase Configuration
+FIREBASE_PROJECT_ID=flokower-app
+FIREBASE_API_KEY=your_api_key_here
+FIREBASE_AUTH_DOMAIN=flokower.firebaseapp.com
+FIREBASE_STORAGE_BUCKET=flokower.appspot.com
+FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+FIREBASE_APP_ID=your_app_id
+
+# Optional API Keys (if needed)
+GOOGLE_MAPS_API_KEY=your_google_maps_key
+STRIPE_PUBLISHABLE_KEY=your_stripe_key
+```
+
+---
+
+## 📦 Dependencies Overview
+
+### Core Dependencies
+```yaml
+dependencies:
+  flutter_riverpod: ^2.4.0      # State management
+  firebase_core: ^2.24.0         # Firebase core
+  firebase_auth: ^4.17.0         # Authentication
+  cloud_firestore: ^4.14.0       # Database
+  
+  google_fonts: ^6.1.0           # Typography
+  intl: ^0.18.0                  # Internationalization
+  shimmer: ^2.0.0                # Loading animations
+  
+  excel: ^4.0.0                  # Export functionality
+  path_provider: ^2.1.1          # File handling
+  
+  fl_chart: ^0.15.0              # Charts/analytics
+  share_plus: ^7.2.0             # Sharing functionality
+```
+
+### Dev Dependencies
+```yaml
+dev_dependencies:
+  flutter_test: sdk: flutter
+  riverpod_lint: ^2.3.0
+  build_runner: ^2.4.0
+  flutter_lints: ^3.0.0
+  mockito: ^5.4.0               # Testing mocks
+```
+
+---
+
+## 🎨 Design System
+
+**Primary Font:** Inter  
+**Theme Mode:** Light/Dark  
+**Color Palette:** Black & White Minimalist  
+**Accent Colors:** Green (Success), Orange (Warning), Red (Error)
+
+Refer to `docs/DESIGN.md` for complete design tokens.
+
+---
+
+## 🔐 Security Settings
+
+### Firestore Security Rules
+Location: `firestore.rules`
+
+All read/write operations require authentication:
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match {
+      match /{document=**} {
+        allow read, write: if request.auth != null;
+      }
+    }
+  }
+}
+```
+
+### Firebase Authentication
+- Email + OTP verification enabled
+- No anonymous authentication
+- Email provider configured
+
+---
+
+## 📊 Performance Targets
+
+| Metric | Target | Threshold |
+|--------|--------|-----------|
+| App cold start | < 2 seconds | Warning > 3s |
+| Screen transitions | 60 FPS | Warning < 55 FPS |
+| API response time | < 500ms | Warning > 1s |
+| Bundle size | < 30 MB | Warning > 50 MB |
+
+---
+
+## 🧪 Testing Standards
+
+### Coverage Requirements
+- **Critical paths:** ≥ 90% coverage
+- **Business logic:** ≥ 80% coverage
+- **UI components:** ≥ 70% coverage
+
+### Test Types Priority
+1. Unit tests (business logic, validators)
+2. Widget tests (components, forms)
+3. Integration tests (user flows)
+4. E2E tests (critical paths only)
+
+---
+
+## 🚀 Deployment Settings
+
+### Build Configuration
+
+**Production Builds:**
+- Release mode only
+- Minify code enabled
+- Obfuscate symbols enabled
+- Stripe/Firebase production keys
+
+**Debug Builds:**
+- Development mode
+- Logging enabled
+- Hot reload available
+
+### App Store Requirements
+- iOS 12.0+ (minimum)
+- Android API 21+ (minimum)
+- Privacy policy URL required
+- Terms of service URL required
+
+---
+
+## 📞 Contact & Support
+
+**Project Lead:** teranixbq  
+**Email:** hanieffathulb03@gmail.com  
+**Repository:** https://github.com/teranixbq/Flokower
+
+**Support Channels:**
+- GitHub Issues (bugs, feature requests)
+- Email (urgent matters)
+- Documentation docs folder (self-service)
+
+---
+
+## 🔄 Backup & Recovery
+
+### Automated Backups
+- Daily Firestore backup enabled
+- Weekly full database snapshot
+- Retention: 30 days
+
+### Manual Backup Command
+```bash
+firebase firestore:export gs://flokower-backup/backups/$(date +%Y%m%d)
+```
+
+### Restore Command
+```bash
+firebase firestore:import gs://flokower-backup/backups/backup_file.json
+```
+
+---
+
+## ⚙️ CI/CD Pipeline (Planned)
+
+**GitHub Actions Workflow:**
+1. On push to `main`:
+   - Run `flutter analyze`
+   - Execute unit tests
+   - Deploy to Firebase Hosting (staging)
+
+2. On tag creation:
+   - Run integration tests
+   - Build release APK/IPA
+   - Deploy to TestFlight/Play Console Internal Track
+
+---
+
+## 📝 Version History
+
+| Date | Version | Changes | Author |
+|------|---------|---------|--------|
+| 2024-01-XX | 1.0.0 | Initial setup with user config | teranixbq |
+
+---
+
+*Last Updated: 2024-01-XX*  
+*Maintained by: teranixbq*  
+*Status: Active Development*
