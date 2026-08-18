@@ -1,28 +1,23 @@
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb, TargetPlatform;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-/// Firebase configuration loaded from environment variables.
+/// Firebase configuration that reads from .env file.
 ///
-/// Run the app with:
-///   flutter run --dart-define-from-file=.env
+/// The .env file is loaded in main.dart BEFORE Firebase init:
+///   await dotenv.load(fileName: ".env");
 ///
-/// Or manually:
-///   flutter run \
-///     --dart-define=FIREBASE_API_KEY=xxx \
-///     --dart-define=FIREBASE_APP_ID=xxx \
-///     --dart-define=FIREBASE_MESSAGING_SENDER_ID=xxx \
-///     --dart-define=FIREBASE_PROJECT_ID=flokower \
-///     --dart-define=FIREBASE_STORAGE_BUCKET=xxx \
-///     --dart-define=FIREBASE_AUTH_DOMAIN=xxx
+/// Then this class reads values via dotenv.env['KEY'].
+/// No need for --dart-define or run.sh anymore!
+/// Just run: flutter run
 
 class DefaultFirebaseOptions {
-  // Read from --dart-define at compile time
-  static const String _apiKey = String.fromEnvironment('FIREBASE_API_KEY', defaultValue: '');
-  static const String _appId = String.fromEnvironment('FIREBASE_APP_ID', defaultValue: '');
-  static const String _senderId = String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID', defaultValue: '');
-  static const String _projectId = String.fromEnvironment('FIREBASE_PROJECT_ID', defaultValue: 'flokower');
-  static const String _storageBucket = String.fromEnvironment('FIREBASE_STORAGE_BUCKET', defaultValue: '');
-  static const String _authDomain = String.fromEnvironment('FIREBASE_AUTH_DOMAIN', defaultValue: '');
+  static String get _apiKey => dotenv.env['FIREBASE_API_KEY'] ?? '';
+  static String get _appId => dotenv.env['FIREBASE_APP_ID'] ?? '';
+  static String get _senderId => dotenv.env['FIREBASE_MESSAGING_SENDER_ID'] ?? '';
+  static String get _projectId => dotenv.env['FIREBASE_PROJECT_ID'] ?? 'flokower';
+  static String get _storageBucket => dotenv.env['FIREBASE_STORAGE_BUCKET'] ?? '';
+  static String get _authDomain => dotenv.env['FIREBASE_AUTH_DOMAIN'] ?? '';
 
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) return web;

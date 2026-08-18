@@ -28,6 +28,7 @@ dependencies:
   # Utilities
   uuid: ^4.2.1
   shared_preferences: ^2.2.0
+  flutter_dotenv: ^5.1.0
   
   # Charts (Optional)
   fl_chart: ^1.2.0
@@ -41,3 +42,6 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  assets:
+    - .env
