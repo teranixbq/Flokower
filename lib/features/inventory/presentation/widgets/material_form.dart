@@ -45,15 +45,27 @@ class _MaterialFormState extends ConsumerState<MaterialForm> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
+    final dialogContext = context;
+
     try {
+      final newQty = int.parse(_quantityController.text.isEmpty ? '0' : _quantityController.text);
+      final reserved = widget.material?.reservedQuantity ?? 0;
+
+      // Prevent setting quantity below reserved amount
+      if (newQty < reserved) {
+        showToast(dialogContext, message: 'Jumlah tidak boleh kurang dari reserved ($reserved)!', type: ToastType.warning);
+        return;
+      }
+
       final material = Material(
         id: widget.material?.id ?? '',
         name: _nameController.text.trim(),
         unit: _selectedUnit,
-        currentQuantity: int.parse(_quantityController.text.isEmpty ? '0' : _quantityController.text),
-        initialQuantity: widget.material == null
-            ? int.parse(_quantityController.text.isEmpty ? '0' : _quantityController.text)
-            : widget.material!.initialQuantity,
+        currentQuantity: newQty,
+        reservedQuantity: reserved,
+        initialQuantity: widget.material == null ? newQty : widget.material!.initialQuantity,
+        totalAdditions: widget.material?.totalAdditions ?? 0,
+        totalDeductions: widget.material?.totalDeductions ?? 0,
         threshold: int.parse(_thresholdController.text.isEmpty ? '10' : _thresholdController.text),
         createdAt: widget.material?.createdAt ?? DateTime.now(),
         updatedAt: DateTime.now(),
@@ -65,12 +77,14 @@ class _MaterialFormState extends ConsumerState<MaterialForm> {
         await ref.read(materialProvider.notifier).addMaterial(material);
       }
 
-      if (mounted) {
-        Navigator.pop(context, true);
-        showToast(context, message: isEditing ? 'Bahan berhasil diperbarui!' : 'Bahan berhasil ditambahkan!', type: ToastType.success);
+      if (dialogContext.mounted) {
+        Navigator.pop(dialogContext, true);
+        showToast(dialogContext, message: isEditing ? 'Bahan berhasil diperbarui!' : 'Bahan berhasil ditambahkan!', type: ToastType.success);
       }
     } catch (e) {
-      if (mounted) showToast(context, message: 'Error: $e', type: ToastType.error);
+      if (dialogContext.mounted) {
+        showToast(dialogContext, message: 'Gagal menyimpan: $e', type: ToastType.error);
+      }
     }
   }
 

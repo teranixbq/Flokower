@@ -60,8 +60,10 @@ class MaterialRepository {
     try {
       await _collection.doc(material.id).update({
         'name': material.name,
+        'unit': material.unit,
         'currentQuantity': material.currentQuantity,
         'reservedQuantity': material.reservedQuantity,
+        'threshold': material.threshold,
         'updatedAt': FieldValue.serverTimestamp(),
       });
     } catch (e) {

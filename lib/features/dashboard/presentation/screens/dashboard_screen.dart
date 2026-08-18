@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../shared/theme/flokower_theme.dart';
+import '../../../../shared/widgets/settings_button.dart';
 import '../../../inventory/presentation/providers/material_provider.dart';
 import '../../../inventory/presentation/providers/product_provider.dart';
 import '../../../transactions/presentation/providers/transaction_provider.dart';
@@ -30,82 +31,7 @@ class DashboardScreen extends ConsumerWidget {
             const Text('Flokower'),
           ],
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: PopupMenuButton<String>(
-              icon: const Icon(Icons.settings_outlined, color: FlokowerTheme.darkGray),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              offset: const Offset(0, 48),
-              onSelected: (value) async {
-                if (value == 'logout') {
-                  final confirm = await showDialog<bool>(
-                    context: context,
-                    builder: (ctx) => AlertDialog(
-                      title: const Text('Keluar?', style: TextStyle(fontWeight: FontWeight.w700)),
-                      content: const Text('Apakah Anda yakin ingin keluar?'),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                      actions: [
-                        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
-                        TextButton(
-                          onPressed: () => Navigator.pop(ctx, true),
-                          child: const Text('Keluar', style: TextStyle(color: FlokowerTheme.accentRed, fontWeight: FontWeight.w600)),
-                        ),
-                      ],
-                    ),
-                  );
-                  if (confirm == true) {
-                    await FirebaseAuth.instance.signOut();
-                  }
-                }
-              },
-              itemBuilder: (context) => [
-                PopupMenuItem(
-                  enabled: false,
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 36, height: 36,
-                        decoration: BoxDecoration(
-                          color: FlokowerTheme.black,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(Icons.person_rounded, color: Colors.white, size: 18),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              user?.displayName ?? 'Pengguna',
-                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: FlokowerTheme.black),
-                            ),
-                            Text(
-                              user?.email ?? '',
-                              style: TextStyle(fontSize: 11, color: FlokowerTheme.mediumGray),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem(enabled: false, height: 1, child: Divider(height: 1)),
-                const PopupMenuItem(
-                  value: 'logout',
-                  child: Row(
-                    children: [
-                      Icon(Icons.logout_rounded, color: FlokowerTheme.accentRed, size: 20),
-                      SizedBox(width: 10),
-                      Text('Keluar', style: TextStyle(color: FlokowerTheme.accentRed, fontWeight: FontWeight.w600)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+        actions: const [SettingsButton()],
       ),
       body: RefreshIndicator(
         color: FlokowerTheme.black,

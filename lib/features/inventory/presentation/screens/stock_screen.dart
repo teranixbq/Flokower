@@ -2,6 +2,7 @@ import 'package:flutter/material.dart' hide Material;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/theme/flokower_theme.dart';
 import '../../../../shared/widgets/toast.dart';
+import '../../../../shared/widgets/settings_button.dart';
 import '../../../../shared/models/material_model.dart';
 import '../../../../shared/models/product_model.dart';
 import '../providers/material_provider.dart';
@@ -36,6 +37,7 @@ class _StockScreenState extends ConsumerState<StockScreen> with SingleTickerProv
     return Scaffold(
       appBar: AppBar(
         title: const Text('Stok'),
+        actions: const [SettingsButton()],
         bottom: TabBar(
           controller: _tabController,
           tabs: const [

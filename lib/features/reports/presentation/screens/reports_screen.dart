@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/theme/flokower_theme.dart';
 import '../../../../shared/utils/currency_formatter.dart';
+import '../../../../shared/widgets/settings_button.dart';
 import '../../../../shared/models/transaction_model.dart';
 import '../../../transactions/presentation/providers/transaction_provider.dart';
 
@@ -23,7 +24,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     final totalRevenue = completed.fold(0.0, (sum, t) => sum + t.totalAmount);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Laporan Penjualan')),
+      appBar: AppBar(title: const Text('Laporan Penjualan'), actions: const [SettingsButton()]),
       body: Column(
         children: [
           // ─── Summary + Filters in ONE white block ───
