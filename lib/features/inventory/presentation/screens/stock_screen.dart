@@ -9,6 +9,7 @@ import '../providers/material_provider.dart';
 import '../providers/product_provider.dart';
 import '../widgets/material_form.dart';
 import '../widgets/product_form_dialog.dart';
+import '../widgets/stock_adjust_dialog.dart';
 
 class StockScreen extends ConsumerStatefulWidget {
   const StockScreen({super.key});
@@ -102,7 +103,24 @@ class _MaterialsTab extends ConsumerWidget {
       itemBuilder: (context, index) {
         final material = state.materials[index];
         return GestureDetector(
-          onTap: () => showDialog(context: context, builder: (ctx) => MaterialForm(material: material)),
+          // Klik bahan → dialog ubah stok cepat (jumlah saat ini + stepper).
+          // Dari sana bisa lanjut ke form edit detail.
+          onTap: () async {
+            final result = await showDialog<String>(
+              context: context,
+              builder: (ctx) => StockAdjustDialog(material: material),
+            );
+            if (result == 'edit' && context.mounted) {
+              try {
+                final latest = ref.read(materialProvider.notifier).materialById(material.id);
+                if (context.mounted) {
+                  showDialog(context: context, builder: (ctx) => MaterialForm(material: latest));
+                }
+              } catch (_) {
+                // bahan sudah dihapus
+              }
+            }
+          },
           child: Container(
             margin: const EdgeInsets.only(bottom: 10),
             padding: const EdgeInsets.all(16),
@@ -185,70 +203,118 @@ class _ProductsTab extends ConsumerWidget {
       );
     }
 
-    return ListView.builder(
+    // Grid rata (bukan bento): semua kartu ukuran sama,
+    // gambar menampilkan hasil upload foto produk.
+    return GridView.builder(
       padding: const EdgeInsets.all(16),
+      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 210,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        childAspectRatio: 0.72,
+      ),
       itemCount: state.products.length,
       itemBuilder: (context, index) {
         final product = state.products[index];
+        final hasImage = product.imageUrl != null && product.imageUrl!.isNotEmpty;
         return GestureDetector(
           onTap: () => showDialog(context: context, builder: (ctx) => ProductFormDialog(product: product)),
           child: Container(
-            margin: const EdgeInsets.only(bottom: 10),
-            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: FlokowerTheme.white,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: product.isActive ? const Color(0xFFEEEEEE) : FlokowerTheme.accentRed.withOpacity(0.3)),
             ),
-            child: Row(
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Product image or placeholder
-                Container(
-                  width: 52, height: 52,
-                  decoration: BoxDecoration(
-                    color: product.isActive ? FlokowerTheme.accentGreenLight : FlokowerTheme.offWhite,
-                    borderRadius: BorderRadius.circular(12),
-                    image: product.imageUrl != null && product.imageUrl!.isNotEmpty
-                        ? DecorationImage(image: NetworkImage(product.imageUrl!), fit: BoxFit.cover)
-                        : null,
-                  ),
-                  child: product.imageUrl == null || product.imageUrl!.isEmpty
-                      ? Icon(Icons.local_florist_rounded, color: product.isActive ? FlokowerTheme.accentGreen : FlokowerTheme.lightGray, size: 24)
-                      : null,
-                ),
-                const SizedBox(width: 14),
+                // ─── Foto produk (hasil upload) ───
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  flex: 5,
+                  child: Stack(
+                    fit: StackFit.expand,
                     children: [
-                      Text(product.name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: FlokowerTheme.black)),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Rp ${product.price.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')} • ${product.ingredients.length} bahan',
-                        style: TextStyle(fontSize: 13, color: FlokowerTheme.mediumGray),
-                      ),
+                      if (hasImage)
+                        Image.network(
+                          product.imageUrl!,
+                          fit: BoxFit.cover,
+                          loadingBuilder: (context, child, progress) {
+                            if (progress == null) return child;
+                            return Container(
+                              color: FlokowerTheme.offWhite,
+                              child: const Center(
+                                child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2)),
+                              ),
+                            );
+                          },
+                          errorBuilder: (context, error, stack) => const _ProductImagePlaceholder(),
+                        )
+                      else
+                        const _ProductImagePlaceholder(),
+                      if (!product.isActive)
+                        Positioned(
+                          top: 8,
+                          left: 8,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: FlokowerTheme.accentRed,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Text('Nonaktif', style: TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.w600)),
+                          ),
+                        ),
                     ],
                   ),
                 ),
-                if (!product.isActive)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(color: FlokowerTheme.accentRedLight, borderRadius: BorderRadius.circular(8)),
-                    child: const Text('Nonaktif', style: TextStyle(fontSize: 11, color: FlokowerTheme.accentRed, fontWeight: FontWeight.w600)),
-                  )
-                else
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(color: FlokowerTheme.accentGreenLight, borderRadius: BorderRadius.circular(8)),
-                    child: const Text('Aktif', style: TextStyle(fontSize: 11, color: FlokowerTheme.accentGreen, fontWeight: FontWeight.w600)),
+                // ─── Info produk ───
+                Expanded(
+                  flex: 3,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          product.name,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: FlokowerTheme.black, height: 1.2),
+                        ),
+                        const Spacer(),
+                        Text(
+                          'Rp ${_fmt(product.price)}',
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: FlokowerTheme.darkGray),
+                        ),
+                      ],
+                    ),
                   ),
-                const SizedBox(width: 4),
-                Icon(Icons.chevron_right_rounded, color: FlokowerTheme.lightGray, size: 20),
+                ),
               ],
             ),
           ),
         );
       },
+    );
+  }
+
+  String _fmt(double n) {
+    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}jt';
+    return n.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.');
+  }
+}
+
+class _ProductImagePlaceholder extends StatelessWidget {
+  const _ProductImagePlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: FlokowerTheme.offWhite,
+      child: const Center(
+        child: Icon(Icons.local_florist_rounded, size: 32, color: FlokowerTheme.lightGray),
+      ),
     );
   }
 }

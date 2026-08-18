@@ -1,9 +1,9 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import '../../../../services/r2_storage_service.dart';
 import '../../../../shared/theme/flokower_theme.dart';
 import '../../../../shared/widgets/toast.dart';
 import '../../../../shared/utils/currency_formatter.dart';
@@ -26,8 +26,8 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
   final _descriptionController = TextEditingController();
   List<ProductIngredient> _selectedIngredients = [];
   
-  // Image upload
-  File? _imageFile;
+  // Image upload (bytes-based: works on Web AND mobile)
+  Uint8List? _imageBytes;
   String? _existingImageUrl;
   bool _isUploading = false;
   final ImagePicker _picker = ImagePicker();
@@ -60,25 +60,24 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
     try {
       final picked = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
       if (picked != null) {
-        setState(() => _imageFile = File(picked.path));
+        // Read as bytes so it works on Web (File/dart:io is not supported on Web)
+        final bytes = await picked.readAsBytes();
+        if (mounted) setState(() => _imageBytes = bytes);
       }
     } catch (e) {
       if (mounted) showToast(context, message: 'Gagal memilih gambar: $e', type: ToastType.error);
     }
   }
 
-  Future<String?> _uploadImage(File imageFile) async {
+  Future<String?> _uploadImage(Uint8List bytes) async {
     try {
       setState(() => _isUploading = true);
-      final storageRef = FirebaseStorage.instance.ref();
-      final fileName = 'products/${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final uploadTask = storageRef.child(fileName).putFile(imageFile);
-      final snapshot = await uploadTask;
-      final downloadUrl = await snapshot.ref.getDownloadURL();
-      setState(() => _isUploading = false);
+      // Upload ke Cloudflare R2 (S3 API) → kembalikan URL publik bucket
+      final downloadUrl = await R2StorageService.uploadProductImage(bytes);
+      if (mounted) setState(() => _isUploading = false);
       return downloadUrl;
     } catch (e) {
-      setState(() => _isUploading = false);
+      if (mounted) setState(() => _isUploading = false);
       if (mounted) showToast(context, message: 'Gagal upload gambar: $e', type: ToastType.error);
       return null;
     }
@@ -129,6 +128,7 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
                       itemCount: filtered.length,
                       itemBuilder: (context, index) {
                         final m = filtered[index];
+                        final alreadyAdded = _selectedIngredients.any((i) => i.materialId == m.id);
                         return ListTile(
                           contentPadding: EdgeInsets.zero,
                           leading: Container(
@@ -141,6 +141,9 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
                           ),
                           title: Text(m.name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                           subtitle: Text('${m.availableQuantity} ${m.unit} tersedia', style: TextStyle(fontSize: 12, color: FlokowerTheme.mediumGray)),
+                          trailing: alreadyAdded
+                              ? const Icon(Icons.check_circle_rounded, size: 18, color: FlokowerTheme.accentGreen)
+                              : null,
                           onTap: () => Navigator.pop(ctx, {'materialId': m.id}),
                         );
                       },
@@ -183,10 +186,21 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
 
       if (qtyResult != null && qtyResult > 0) {
         setState(() {
-          _selectedIngredients.add(ProductIngredient(
-            materialId: result['materialId'],
-            quantityNeeded: qtyResult,
-          ));
+          final materialId = result['materialId'] as String;
+          final existingIndex = _selectedIngredients.indexWhere((i) => i.materialId == materialId);
+          if (existingIndex >= 0) {
+            // Bahan sudah ada di list → tambahkan quantity-nya, jangan buat entry baru
+            final existing = _selectedIngredients[existingIndex];
+            _selectedIngredients[existingIndex] = ProductIngredient(
+              materialId: materialId,
+              quantityNeeded: existing.quantityNeeded + qtyResult,
+            );
+          } else {
+            _selectedIngredients.add(ProductIngredient(
+              materialId: materialId,
+              quantityNeeded: qtyResult,
+            ));
+          }
         });
       }
     }
@@ -194,6 +208,13 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+
+    // Foto produk WAJIB — baik buat baru maupun edit
+    if (_imageBytes == null && (_existingImageUrl == null || _existingImageUrl!.isEmpty)) {
+      showToast(context, message: 'Foto produk wajib diupload!', type: ToastType.warning);
+      return;
+    }
+
     if (_selectedIngredients.isEmpty) {
       showToast(context, message: 'Minimal pilih 1 bahan!', type: ToastType.warning);
       return;
@@ -202,14 +223,20 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
     try {
       setState(() => _isUploading = true);
 
-      // Upload image if new file selected
+      // Upload image if new bytes selected
       String? imageUrl = _existingImageUrl;
-      if (_imageFile != null) {
-        final uploadedUrl = await _uploadImage(_imageFile!);
-        if (uploadedUrl != null) imageUrl = uploadedUrl;
+      if (_imageBytes != null) {
+        final uploadedUrl = await _uploadImage(_imageBytes!);
+        if (uploadedUrl != null) {
+          imageUrl = uploadedUrl;
+        } else {
+          // Upload gagal → jangan simpan produk tanpa foto
+          if (mounted) setState(() => _isUploading = false);
+          return;
+        }
       }
 
-      setState(() => _isUploading = false);
+      if (mounted) setState(() => _isUploading = false);
 
       final price = CurrencyInputFormatter.parse(_priceController.text);
 
@@ -236,7 +263,7 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
         showToast(context, message: isEditing ? 'Produk berhasil diperbarui!' : 'Produk berhasil ditambahkan!', type: ToastType.success);
       }
     } catch (e) {
-      setState(() => _isUploading = false);
+      if (mounted) setState(() => _isUploading = false);
       if (mounted) showToast(context, message: 'Error: $e', type: ToastType.error);
     }
   }
@@ -278,8 +305,18 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // ─── Image Upload ───
-                      const Text('Foto Produk', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: FlokowerTheme.darkGray)),
+                      // ─── Image Upload (WAJIB) ───
+                      Row(
+                        children: [
+                          const Text('Foto Produk', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: FlokowerTheme.darkGray)),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(color: FlokowerTheme.accentRedLight, borderRadius: BorderRadius.circular(6)),
+                            child: const Text('wajib', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: FlokowerTheme.accentRed)),
+                          ),
+                        ],
+                      ),
                       const SizedBox(height: 8),
                       GestureDetector(
                         onTap: _pickImage,
@@ -290,13 +327,13 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
                             color: FlokowerTheme.offWhite,
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(color: FlokowerTheme.silver, style: BorderStyle.solid),
-                            image: _imageFile != null
-                                ? DecorationImage(image: FileImage(_imageFile!), fit: BoxFit.cover)
+                            image: _imageBytes != null
+                                ? DecorationImage(image: MemoryImage(_imageBytes!), fit: BoxFit.cover)
                                 : _existingImageUrl != null && _existingImageUrl!.isNotEmpty
                                     ? DecorationImage(image: NetworkImage(_existingImageUrl!), fit: BoxFit.cover)
                                     : null,
                           ),
-                          child: _imageFile == null && (_existingImageUrl == null || _existingImageUrl!.isEmpty)
+                          child: _imageBytes == null && (_existingImageUrl == null || _existingImageUrl!.isEmpty)
                               ? Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [

@@ -18,10 +18,13 @@ dependencies:
   firebase_core: ^2.24.0
   firebase_auth: ^4.17.0
   cloud_firestore: ^4.14.0
-  firebase_storage: ^11.6.0
   
   # Image
   image_picker: ^1.0.7
+  
+  # Cloudflare R2 (S3 API) upload
+  crypto: ^3.0.7
+  http: ^1.6.0
   
   # UI Components
   google_fonts: ^6.1.0

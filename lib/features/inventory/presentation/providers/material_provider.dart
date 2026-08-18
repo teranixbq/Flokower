@@ -25,6 +25,17 @@ class MaterialNotifier extends StateNotifier<MaterialState> {
 
   Material materialById(String id) => state.materials.firstWhere((m) => m.id == id);
 
+  /// Cari bahan berdasarkan nama (case-insensitive).
+  /// Dipakai untuk mencegah duplikasi bahan saat pembuatan.
+  Material? findByName(String name) {
+    final target = name.trim().toLowerCase();
+    if (target.isEmpty) return null;
+    for (final m in state.materials) {
+      if (m.name.trim().toLowerCase() == target) return m;
+    }
+    return null;
+  }
+
   Future<void> loadMaterials() async {
     try {
       state = state.copyWith(isLoading: true, error: null);

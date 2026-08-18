@@ -43,8 +43,9 @@ class Material {
       totalAdditions: data['totalAdditions'] ?? 0,
       totalDeductions: data['totalDeductions'] ?? 0,
       threshold: data['threshold'] ?? 10,
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
-      updatedAt: (data['updatedAt'] as Timestamp).toDate(),
+      // Null-safe: snapshot lokal (pending serverTimestamp) bisa berisi null
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
 

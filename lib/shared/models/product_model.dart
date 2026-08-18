@@ -60,7 +60,7 @@ class Product {
         (data['priceHistory'] as List?)?.map((p) {
       return PriceHistoryEntry(
         amount: p['amount'] as double? ?? 0.0,
-        effectiveDate: (p['effectiveDate'] as Timestamp).toDate(),
+        effectiveDate: (p['effectiveDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
         previousAmount: p['previousAmount'] as double? ?? 0.0,
         changedBy: p['changedBy'] ?? '',
         reason: p['reason'],
@@ -76,8 +76,9 @@ class Product {
       isActive: data['isActive'] ?? true,
       ingredients: ingredientsList,
       priceHistory: priceHistoryList,
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
-      updatedAt: (data['updatedAt'] as Timestamp).toDate(),
+      // Null-safe: snapshot lokal (pending serverTimestamp) bisa berisi null
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
 

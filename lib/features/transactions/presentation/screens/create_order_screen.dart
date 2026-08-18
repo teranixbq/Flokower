@@ -134,9 +134,11 @@ class _CreateOrderScreenState extends ConsumerState<CreateOrderScreen> {
                             decoration: BoxDecoration(
                               color: hasStock ? FlokowerTheme.accentGreenLight : FlokowerTheme.accentRedLight,
                               borderRadius: BorderRadius.circular(8),
-                              image: p.imageUrl != null ? DecorationImage(image: NetworkImage(p.imageUrl!), fit: BoxFit.cover) : null,
+                              image: p.imageUrl != null && p.imageUrl!.isNotEmpty
+                                  ? DecorationImage(image: NetworkImage(p.imageUrl!), fit: BoxFit.cover)
+                                  : null,
                             ),
-                            child: p.imageUrl == null
+                            child: p.imageUrl == null || p.imageUrl!.isEmpty
                                 ? Icon(hasStock ? Icons.check_rounded : Icons.close_rounded, size: 16, color: hasStock ? FlokowerTheme.accentGreen : FlokowerTheme.accentRed)
                                 : null,
                           ),

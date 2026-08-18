@@ -38,35 +38,40 @@ class TransactionRepository {
 
   Future<String> createTransaction(TransactionModel transaction) async {
     try {
+      // Pre-validate stock BEFORE entering transaction (for web compatibility)
+      for (var ingredient in transaction.materialsUsed) {
+        final materialDoc = await _materials.doc(ingredient.materialId).get();
+        
+        if (!materialDoc.exists) {
+          throw Exception('Material tidak ditemukan: ${ingredient.materialName}');
+        }
+        
+        var data = materialDoc.data() as Map<String, dynamic>;
+        int currentQty = data['currentQuantity'] ?? 0;
+        int reservedQty = data['reservedQuantity'] ?? 0;
+        int available = currentQty - reservedQty;
+        
+        if (available < ingredient.quantityNeeded) {
+          throw Exception(
+            'Stok ${ingredient.materialName} tidak cukup! '
+            'Tersedia: $available, Dibutuhkan: ${ingredient.quantityNeeded}'
+          );
+        }
+      }
+      
+      // Now run transaction (validation already done above)
       return await _firestore.runTransaction((txn) async {
         // Reserve stock for each ingredient
         for (var ingredient in transaction.materialsUsed) {
           final materialRef = _materials.doc(ingredient.materialId);
-          final materialDoc = await txn.get(materialRef);
-
-          if (!materialDoc.exists) {
-            throw Exception('Material not found: ${ingredient.materialName}');
-          }
-
-          var data = materialDoc.data() as Map<String, dynamic>;
-          int currentQty = data['currentQuantity'] ?? 0;
-          int reservedQty = data['reservedQuantity'] ?? 0;
-          int available = currentQty - reservedQty;
-
-          if (available < ingredient.quantityNeeded) {
-            throw Exception(
-              'Stok ${ingredient.materialName} tidak cukup! '
-              'Tersedia: $available, Dibutuhkan: ${ingredient.quantityNeeded}'
-            );
-          }
-
+          
           // Reserve stock (soft deduction)
           txn.update(materialRef, {
             'reservedQuantity': FieldValue.increment(ingredient.quantityNeeded),
             'updatedAt': FieldValue.serverTimestamp(),
           });
         }
-
+        
         // Create the transaction
         final docRef = _collection.doc();
         txn.set(docRef, transaction.toMap());
@@ -79,37 +84,44 @@ class TransactionRepository {
 
   Future<void> completeTransaction(String transactionId) async {
     try {
-      await _firestore.runTransaction((txn) async {
-        final txDoc = await txn.get(_collection.doc(transactionId));
+      // Pre-validate BEFORE entering transaction
+      final txDoc = await _collection.doc(transactionId).get();
+      
+      if (!txDoc.exists) throw Exception('Transaksi tidak ditemukan');
+      
+      final data = txDoc.data() as Map<String, dynamic>;
+      if (data['status'] != 'in_progress') {
+        throw Exception('Transaksi tidak dalam status in_progress');
+      }
+      
+      final materialsUsed = (data['materialsUsed'] as List?) ?? [];
+      
+      // Pre-validate stock
+      for (var ingredient in materialsUsed) {
+        final materialDoc = await _materials.doc(ingredient['materialId']).get();
         
-        if (!txDoc.exists) throw Exception('Transaksi tidak ditemukan');
+        if (!materialDoc.exists) continue;
         
-        final data = txDoc.data() as Map<String, dynamic>;
-        if (data['status'] != 'in_progress') {
-          throw Exception('Transaksi tidak dalam status in_progress');
+        var matData = materialDoc.data() as Map<String, dynamic>;
+        int currentQty = matData['currentQuantity'] ?? 0;
+        int reservedQty = matData['reservedQuantity'] ?? 0;
+        int qtyNeeded = ingredient['quantityNeeded'] ?? 0;
+        
+        int available = currentQty - reservedQty + qtyNeeded;
+        if (currentQty < qtyNeeded) {
+          throw Exception(
+            'Stok ${ingredient['materialName']} tidak cukup saat penyelesaian!'
+          );
         }
-
+      }
+      
+      // Now run transaction (validation already done)
+      await _firestore.runTransaction((txn) async {
         // Deduct stock permanently
-        final materialsUsed = (data['materialsUsed'] as List?) ?? [];
         for (var ingredient in materialsUsed) {
           final materialRef = _materials.doc(ingredient['materialId']);
-          final materialDoc = await txn.get(materialRef);
-          
-          if (!materialDoc.exists) continue;
-          
-          var matData = materialDoc.data() as Map<String, dynamic>;
-          int currentQty = matData['currentQuantity'] ?? 0;
-          int reservedQty = matData['reservedQuantity'] ?? 0;
           int qtyNeeded = ingredient['quantityNeeded'] ?? 0;
-
-          // Verify stock is still sufficient
-          int available = currentQty - reservedQty + qtyNeeded;
-          if (currentQty < qtyNeeded) {
-            throw Exception(
-              'Stok ${ingredient['materialName']} tidak cukup saat penyelesaian!'
-            );
-          }
-
+          
           // Final deduction
           txn.update(materialRef, {
             'currentQuantity': FieldValue.increment(-qtyNeeded),
@@ -118,7 +130,7 @@ class TransactionRepository {
             'updatedAt': FieldValue.serverTimestamp(),
           });
         }
-
+        
         // Update transaction status
         txn.update(_collection.doc(transactionId), {
           'status': 'completed',
@@ -132,28 +144,31 @@ class TransactionRepository {
 
   Future<void> cancelTransaction(String transactionId, {String? reason}) async {
     try {
+      // Pre-validate BEFORE entering transaction
+      final txDoc = await _collection.doc(transactionId).get();
+      
+      if (!txDoc.exists) throw Exception('Transaksi tidak ditemukan');
+      
+      final data = txDoc.data() as Map<String, dynamic>;
+      if (data['status'] != 'in_progress') {
+        throw Exception('Transaksi tidak dalam status in_progress');
+      }
+      
+      final materialsUsed = (data['materialsUsed'] as List?) ?? [];
+      
+      // Now run transaction (validation already done)
       await _firestore.runTransaction((txn) async {
-        final txDoc = await txn.get(_collection.doc(transactionId));
-        
-        if (!txDoc.exists) throw Exception('Transaksi tidak ditemukan');
-        
-        final data = txDoc.data() as Map<String, dynamic>;
-        if (data['status'] != 'in_progress') {
-          throw Exception('Transaksi tidak dalam status in_progress');
-        }
-
         // Release reserved stock (NO deduction)
-        final materialsUsed = (data['materialsUsed'] as List?) ?? [];
         for (var ingredient in materialsUsed) {
           final materialRef = _materials.doc(ingredient['materialId']);
           int qtyNeeded = ingredient['quantityNeeded'] ?? 0;
-
+          
           txn.update(materialRef, {
             'reservedQuantity': FieldValue.increment(-qtyNeeded),
             'updatedAt': FieldValue.serverTimestamp(),
           });
         }
-
+        
         // Update transaction status
         txn.update(_collection.doc(transactionId), {
           'status': 'cancelled',

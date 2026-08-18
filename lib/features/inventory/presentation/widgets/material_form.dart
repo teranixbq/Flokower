@@ -46,6 +46,8 @@ class _MaterialFormState extends ConsumerState<MaterialForm> {
     if (!_formKey.currentState!.validate()) return;
 
     final dialogContext = context;
+    final notifier = ref.read(materialProvider.notifier);
+    final newName = _nameController.text.trim();
 
     try {
       final newQty = int.parse(_quantityController.text.isEmpty ? '0' : _quantityController.text);
@@ -57,9 +59,64 @@ class _MaterialFormState extends ConsumerState<MaterialForm> {
         return;
       }
 
+      // ─── Cegah duplikasi bahan ───
+      // Saat buat baru: jika nama sudah ada, JANGAN buat bahan baru —
+      // tambahkan saja stoknya ke bahan yang sudah ada.
+      if (!isEditing) {
+        final existing = notifier.findByName(newName);
+        if (existing != null) {
+          if (existing.unit != _selectedUnit) {
+            showToast(
+              dialogContext,
+              message: 'Bahan "${existing.name}" sudah ada dengan satuan ${existing.unit}. Gunakan bahan yang sudah ada untuk menambah stok.',
+              type: ToastType.error,
+            );
+            return;
+          }
+          final confirmed = await showDialog<bool>(
+            context: dialogContext,
+            builder: (ctx) => AlertDialog(
+              title: const Text('Bahan Sudah Ada', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+              content: Text(
+                'Bahan "${existing.name}" sudah ada dengan stok ${existing.currentQuantity} ${existing.unit}.\n\n'
+                'Tambahkan $newQty ${existing.unit} ke bahan yang sudah ada?',
+              ),
+              actions: [
+                TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
+                ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Tambahkan')),
+              ],
+            ),
+          );
+          if (confirmed != true) return;
+
+          final merged = existing.copyWith(
+            currentQuantity: existing.currentQuantity + newQty,
+            totalAdditions: existing.totalAdditions + newQty,
+            updatedAt: DateTime.now(),
+          );
+          await notifier.updateMaterial(merged);
+          if (dialogContext.mounted) {
+            Navigator.pop(dialogContext, true);
+            showToast(
+              dialogContext,
+              message: 'Stok "${existing.name}" ditambahkan $newQty ${existing.unit} (total: ${merged.currentQuantity})',
+              type: ToastType.success,
+            );
+          }
+          return;
+        }
+      } else {
+        // Saat edit: nama tidak boleh sama dengan bahan LAIN
+        final clash = notifier.findByName(newName);
+        if (clash != null && clash.id != widget.material!.id) {
+          showToast(dialogContext, message: 'Nama bahan sudah dipakai oleh "${clash.name}"!', type: ToastType.error);
+          return;
+        }
+      }
+
       final material = Material(
         id: widget.material?.id ?? '',
-        name: _nameController.text.trim(),
+        name: newName,
         unit: _selectedUnit,
         currentQuantity: newQty,
         reservedQuantity: reserved,
