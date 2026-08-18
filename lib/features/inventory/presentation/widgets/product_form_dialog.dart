@@ -244,18 +244,17 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.9,
-          maxWidth: 500,
-          minWidth: MediaQuery.of(context).size.width > 600 ? 500 : MediaQuery.of(context).size.width,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 24, 16, 16),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      child: FractionallySizedBox(
+        widthFactor: 1.0,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 500, maxHeight: 700),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 24, 16, 16),
               child: Row(
                 children: [
                   Expanded(
@@ -485,6 +484,7 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
               ),
             ),
           ],
+          ),
         ),
       ),
     );

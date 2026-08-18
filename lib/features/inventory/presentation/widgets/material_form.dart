@@ -91,15 +91,14 @@ class _MaterialFormState extends ConsumerState<MaterialForm> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.85,
-          maxWidth: 480,
-          minWidth: MediaQuery.of(context).size.width > 600 ? 480 : MediaQuery.of(context).size.width,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      child: FractionallySizedBox(
+        widthFactor: 1.0,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 480, maxHeight: 640),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
             // Header
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 24, 16, 16),
@@ -217,6 +216,7 @@ class _MaterialFormState extends ConsumerState<MaterialForm> {
               ),
             ),
           ],
+        ),
         ),
       ),
     );
