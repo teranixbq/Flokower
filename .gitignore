@@ -46,3 +46,12 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Environment variables (SECRETS - NEVER COMMIT)
+.env
+.env.local
+.env.*.local
+
+# Firebase config (contains secrets)
+# google-services.json is OK to commit for team convenience
+# but .env must NEVER be committed
