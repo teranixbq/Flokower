@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart' hide Material;
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/theme/flokower_theme.dart';
 import '../../../../shared/widgets/toast.dart';
@@ -75,78 +76,135 @@ class _MaterialFormState extends ConsumerState<MaterialForm> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(isEditing ? 'Edit Bahan' : 'Tambah Bahan Baru', style: const TextStyle(fontWeight: FontWeight.w700, color: FlokowerTheme.black)),
-      content: Form(
-        key: _formKey,
+    return Dialog(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.85,
+          maxWidth: 480,
+          minWidth: MediaQuery.of(context).size.width > 600 ? 480 : MediaQuery.of(context).size.width,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('Nama Bahan', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: FlokowerTheme.darkGray)),
-            const SizedBox(height: 8),
-            TextFormField(
-              controller: _nameController,
-              decoration: InputDecoration(
-                hintText: 'Contoh: Mawar Merah',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            // Header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 24, 16, 16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      isEditing ? 'Edit Bahan' : 'Tambah Bahan Baru',
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: FlokowerTheme.black),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, color: FlokowerTheme.mediumGray),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
               ),
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Nama harus diisi' : null,
             ),
-            const SizedBox(height: 16),
-            const Text('Satuan', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: FlokowerTheme.darkGray)),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                _UnitChip(label: 'Lembar', icon: Icons.layers_outlined, selected: _selectedUnit == 'lembar', onTap: () => setState(() => _selectedUnit = 'lembar')),
-                const SizedBox(width: 10),
-                _UnitChip(label: 'Tangkai', icon: Icons.eco_outlined, selected: _selectedUnit == 'tangkai', onTap: () => setState(() => _selectedUnit = 'tangkai')),
-              ],
-            ),
-            const SizedBox(height: 16),
-            const Text('Jumlah Stok', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: FlokowerTheme.darkGray)),
-            const SizedBox(height: 8),
-            TextFormField(
-              controller: _quantityController,
-              decoration: InputDecoration(
-                hintText: '0',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            const Divider(height: 1),
+
+            // Body
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Text('Nama Bahan', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: FlokowerTheme.darkGray)),
+                      const SizedBox(height: 8),
+                      TextFormField(
+                        controller: _nameController,
+                        decoration: InputDecoration(
+                          hintText: 'Contoh: Mawar Merah',
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        ),
+                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Nama harus diisi' : null,
+                      ),
+                      const SizedBox(height: 20),
+                      const Text('Satuan', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: FlokowerTheme.darkGray)),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          _UnitChip(label: 'Lembar', icon: Icons.layers_outlined, selected: _selectedUnit == 'lembar', onTap: () => setState(() => _selectedUnit = 'lembar')),
+                          const SizedBox(width: 10),
+                          _UnitChip(label: 'Tangkai', icon: Icons.eco_outlined, selected: _selectedUnit == 'tangkai', onTap: () => setState(() => _selectedUnit = 'tangkai')),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      const Text('Jumlah Stok', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: FlokowerTheme.darkGray)),
+                      const SizedBox(height: 8),
+                      TextFormField(
+                        controller: _quantityController,
+                        decoration: InputDecoration(
+                          hintText: '0',
+                          suffixText: _selectedUnit,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        ),
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty) return 'Jumlah harus diisi';
+                          if (int.tryParse(v) == null) return 'Angka tidak valid';
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      const Text('Batas Peringatan', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: FlokowerTheme.darkGray)),
+                      const SizedBox(height: 4),
+                      Text('Notifikasi muncul jika stok di bawah angka ini', style: TextStyle(fontSize: 11, color: FlokowerTheme.mediumGray)),
+                      const SizedBox(height: 8),
+                      TextFormField(
+                        controller: _thresholdController,
+                        decoration: InputDecoration(
+                          hintText: '10',
+                          suffixText: _selectedUnit,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        ),
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty) return 'Batas harus diisi';
+                          if (int.tryParse(v) == null) return 'Angka tidak valid';
+                          return null;
+                        },
+                      ),
+                    ],
+                  ),
+                ),
               ),
-              keyboardType: TextInputType.number,
-              validator: (v) {
-                if (v == null || v.trim().isEmpty) return 'Jumlah harus diisi';
-                if (int.tryParse(v) == null) return 'Angka tidak valid';
-                return null;
-              },
             ),
-            const SizedBox(height: 16),
-            const Text('Batas Peringatan', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: FlokowerTheme.darkGray)),
-            const SizedBox(height: 4),
-            Text('Notifikasi muncul jika stok di bawah angka ini', style: TextStyle(fontSize: 11, color: FlokowerTheme.mediumGray)),
-            const SizedBox(height: 8),
-            TextFormField(
-              controller: _thresholdController,
-              decoration: InputDecoration(
-                hintText: '10',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            const Divider(height: 1),
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Batal'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _submit,
+                      child: Text(isEditing ? 'Perbarui' : 'Simpan'),
+                    ),
+                  ),
+                ],
               ),
-              keyboardType: TextInputType.number,
-              validator: (v) {
-                if (v == null || v.trim().isEmpty) return 'Batas harus diisi';
-                if (int.tryParse(v) == null) return 'Angka tidak valid';
-                return null;
-              },
             ),
           ],
         ),
       ),
-      actions: [
-        OutlinedButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
-        ElevatedButton(onPressed: _submit, child: Text(isEditing ? 'Perbarui' : 'Simpan')),
-      ],
     );
   }
 }

@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../shared/theme/flokower_theme.dart';
-import '../../../../shared/widgets/toast.dart';
 import '../../../inventory/presentation/providers/material_provider.dart';
 import '../../../inventory/presentation/providers/product_provider.dart';
 import '../../../transactions/presentation/providers/transaction_provider.dart';
@@ -16,6 +15,7 @@ class DashboardScreen extends ConsumerWidget {
     final materials = ref.watch(materialProvider);
     final products = ref.watch(productProvider);
     final transactions = ref.watch(transactionProvider);
+    final user = FirebaseAuth.instance.currentUser;
 
     return Scaffold(
       appBar: AppBar(
@@ -33,27 +33,76 @@ class DashboardScreen extends ConsumerWidget {
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 8),
-            child: IconButton(
-              icon: const Icon(Icons.logout_rounded, color: FlokowerTheme.mediumGray),
-              onPressed: () async {
-                final confirm = await showDialog<bool>(
-                  context: context,
-                  builder: (ctx) => AlertDialog(
-                    title: const Text('Keluar?'),
-                    content: const Text('Apakah Anda yakin ingin keluar?'),
-                    actions: [
-                      TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
-                      TextButton(
-                        onPressed: () => Navigator.pop(ctx, true),
-                        child: const Text('Keluar', style: TextStyle(color: FlokowerTheme.accentRed)),
+            child: PopupMenuButton<String>(
+              icon: const Icon(Icons.settings_outlined, color: FlokowerTheme.darkGray),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              offset: const Offset(0, 48),
+              onSelected: (value) async {
+                if (value == 'logout') {
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text('Keluar?', style: TextStyle(fontWeight: FontWeight.w700)),
+                      content: const Text('Apakah Anda yakin ingin keluar?'),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      actions: [
+                        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx, true),
+                          child: const Text('Keluar', style: TextStyle(color: FlokowerTheme.accentRed, fontWeight: FontWeight.w600)),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirm == true) {
+                    await FirebaseAuth.instance.signOut();
+                  }
+                }
+              },
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  enabled: false,
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 36, height: 36,
+                        decoration: BoxDecoration(
+                          color: FlokowerTheme.black,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.person_rounded, color: Colors.white, size: 18),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              user?.displayName ?? 'Pengguna',
+                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: FlokowerTheme.black),
+                            ),
+                            Text(
+                              user?.email ?? '',
+                              style: TextStyle(fontSize: 11, color: FlokowerTheme.mediumGray),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
-                );
-                if (confirm == true) {
-                  await FirebaseAuth.instance.signOut();
-                }
-              },
+                ),
+                const PopupMenuItem(enabled: false, height: 1, child: Divider(height: 1)),
+                const PopupMenuItem(
+                  value: 'logout',
+                  child: Row(
+                    children: [
+                      Icon(Icons.logout_rounded, color: FlokowerTheme.accentRed, size: 20),
+                      SizedBox(width: 10),
+                      Text('Keluar', style: TextStyle(color: FlokowerTheme.accentRed, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -78,7 +127,7 @@ class DashboardScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                FirebaseAuth.instance.currentUser?.displayName ?? 'Pengguna',
+                user?.displayName ?? 'Pengguna',
                 style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, letterSpacing: -0.3, color: FlokowerTheme.black),
               ),
               const SizedBox(height: 24),

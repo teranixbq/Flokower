@@ -1,9 +1,13 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import '../../../../shared/theme/flokower_theme.dart';
 import '../../../../shared/widgets/toast.dart';
+import '../../../../shared/utils/currency_formatter.dart';
 import '../../../../shared/models/product_model.dart';
-import '../../../../shared/models/material_model.dart';
 import '../providers/product_provider.dart';
 import '../providers/material_provider.dart';
 
@@ -20,8 +24,13 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
   final _nameController = TextEditingController();
   final _priceController = TextEditingController();
   final _descriptionController = TextEditingController();
-  final _imageUrlController = TextEditingController();
   List<ProductIngredient> _selectedIngredients = [];
+  
+  // Image upload
+  File? _imageFile;
+  String? _existingImageUrl;
+  bool _isUploading = false;
+  final ImagePicker _picker = ImagePicker();
 
   bool get isEditing => widget.product != null;
 
@@ -30,9 +39,11 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
     super.initState();
     if (widget.product != null) {
       _nameController.text = widget.product!.name;
-      _priceController.text = widget.product!.price.toStringAsFixed(0);
+      _priceController.text = widget.product!.price.toStringAsFixed(0).replaceAllMapped(
+        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.',
+      );
       _descriptionController.text = widget.product!.description ?? '';
-      _imageUrlController.text = widget.product!.imageUrl ?? '';
+      _existingImageUrl = widget.product!.imageUrl;
       _selectedIngredients = widget.product!.ingredients.toList();
     }
   }
@@ -42,8 +53,35 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
     _nameController.dispose();
     _priceController.dispose();
     _descriptionController.dispose();
-    _imageUrlController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final picked = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+      if (picked != null) {
+        setState(() => _imageFile = File(picked.path));
+      }
+    } catch (e) {
+      if (mounted) showToast(context, message: 'Gagal memilih gambar: $e', type: ToastType.error);
+    }
+  }
+
+  Future<String?> _uploadImage(File imageFile) async {
+    try {
+      setState(() => _isUploading = true);
+      final storageRef = FirebaseStorage.instance.ref();
+      final fileName = 'products/${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final uploadTask = storageRef.child(fileName).putFile(imageFile);
+      final snapshot = await uploadTask;
+      final downloadUrl = await snapshot.ref.getDownloadURL();
+      setState(() => _isUploading = false);
+      return downloadUrl;
+    } catch (e) {
+      setState(() => _isUploading = false);
+      if (mounted) showToast(context, message: 'Gagal upload gambar: $e', type: ToastType.error);
+      return null;
+    }
   }
 
   String _getMaterialName(String materialId) {
@@ -71,6 +109,7 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
             title: const Text('Pilih Bahan', style: TextStyle(fontWeight: FontWeight.w700)),
             content: SizedBox(
               width: double.maxFinite,
+              height: 400,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -85,9 +124,8 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
                     onChanged: (_) => setDialogState(() {}),
                   ),
                   const SizedBox(height: 12),
-                  Flexible(
+                  Expanded(
                     child: ListView.builder(
-                      shrinkWrap: true,
                       itemCount: filtered.length,
                       itemBuilder: (context, index) {
                         final m = filtered[index];
@@ -162,12 +200,25 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
     }
 
     try {
+      setState(() => _isUploading = true);
+
+      // Upload image if new file selected
+      String? imageUrl = _existingImageUrl;
+      if (_imageFile != null) {
+        final uploadedUrl = await _uploadImage(_imageFile!);
+        if (uploadedUrl != null) imageUrl = uploadedUrl;
+      }
+
+      setState(() => _isUploading = false);
+
+      final price = CurrencyInputFormatter.parse(_priceController.text);
+
       final product = Product(
         id: widget.product?.id ?? '',
         name: _nameController.text.trim(),
-        price: double.parse(_priceController.text.isEmpty ? '0' : _priceController.text),
+        price: price,
         description: _descriptionController.text.trim().isEmpty ? null : _descriptionController.text.trim(),
-        imageUrl: _imageUrlController.text.trim().isEmpty ? null : _imageUrlController.text.trim(),
+        imageUrl: imageUrl,
         isActive: true,
         ingredients: _selectedIngredients,
         createdAt: widget.product?.createdAt ?? DateTime.now(),
@@ -185,6 +236,7 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
         showToast(context, message: isEditing ? 'Produk berhasil diperbarui!' : 'Produk berhasil ditambahkan!', type: ToastType.success);
       }
     } catch (e) {
+      setState(() => _isUploading = false);
       if (mounted) showToast(context, message: 'Error: $e', type: ToastType.error);
     }
   }
@@ -193,17 +245,21 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
   Widget build(BuildContext context) {
     return Dialog(
       child: ConstrainedBox(
-        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.85, maxWidth: 480),
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.9,
+          maxWidth: 500,
+          minWidth: MediaQuery.of(context).size.width > 600 ? 500 : MediaQuery.of(context).size.width,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             // Header
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 12, 12),
+              padding: const EdgeInsets.fromLTRB(24, 24, 16, 16),
               child: Row(
                 children: [
                   Expanded(
-                    child: Text(isEditing ? 'Edit Produk' : 'Tambah Produk Baru', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: FlokowerTheme.black)),
+                    child: Text(isEditing ? 'Edit Produk' : 'Tambah Produk Baru', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: FlokowerTheme.black)),
                   ),
                   IconButton(
                     icon: const Icon(Icons.close_rounded, color: FlokowerTheme.mediumGray),
@@ -217,48 +273,67 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
             // Body
             Flexible(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(24),
                 child: Form(
                   key: _formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Image URL
+                      // ─── Image Upload ───
                       const Text('Foto Produk', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: FlokowerTheme.darkGray)),
                       const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Container(
-                            width: 56, height: 56,
-                            decoration: BoxDecoration(
-                              color: FlokowerTheme.offWhite,
-                              borderRadius: BorderRadius.circular(12),
-                              image: _imageUrlController.text.isNotEmpty
-                                  ? DecorationImage(image: NetworkImage(_imageUrlController.text), fit: BoxFit.cover)
-                                  : null,
-                            ),
-                            child: _imageUrlController.text.isEmpty
-                                ? Icon(Icons.image_outlined, color: FlokowerTheme.lightGray, size: 24)
-                                : null,
+                      GestureDetector(
+                        onTap: _pickImage,
+                        child: Container(
+                          width: double.infinity,
+                          height: 160,
+                          decoration: BoxDecoration(
+                            color: FlokowerTheme.offWhite,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: FlokowerTheme.silver, style: BorderStyle.solid),
+                            image: _imageFile != null
+                                ? DecorationImage(image: FileImage(_imageFile!), fit: BoxFit.cover)
+                                : _existingImageUrl != null && _existingImageUrl!.isNotEmpty
+                                    ? DecorationImage(image: NetworkImage(_existingImageUrl!), fit: BoxFit.cover)
+                                    : null,
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: TextField(
-                              controller: _imageUrlController,
-                              decoration: InputDecoration(
-                                hintText: 'URL gambar produk (opsional)',
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                isDense: true,
-                              ),
-                              onChanged: (_) => setState(() {}),
-                            ),
-                          ),
-                        ],
+                          child: _imageFile == null && (_existingImageUrl == null || _existingImageUrl!.isEmpty)
+                              ? Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.add_photo_alternate_outlined, size: 40, color: FlokowerTheme.lightGray),
+                                    const SizedBox(height: 8),
+                                    Text('Tap untuk upload foto', style: TextStyle(fontSize: 13, color: FlokowerTheme.mediumGray)),
+                                    const SizedBox(height: 4),
+                                    Text('dari galeri', style: TextStyle(fontSize: 11, color: FlokowerTheme.lightGray)),
+                                  ],
+                                )
+                              : _isUploading
+                                  ? const Center(child: CircularProgressIndicator(strokeWidth: 2.5))
+                                  : Container(
+                                      alignment: Alignment.bottomRight,
+                                      padding: const EdgeInsets.all(8),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                        decoration: BoxDecoration(
+                                          color: Colors.black54,
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: const Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(Icons.edit_rounded, size: 14, color: Colors.white),
+                                            SizedBox(width: 4),
+                                            Text('Ganti', style: TextStyle(fontSize: 11, color: Colors.white, fontWeight: FontWeight.w600)),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                        ),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 24),
 
-                      // Name
+                      // ─── Name ───
                       const Text('Nama Produk', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: FlokowerTheme.darkGray)),
                       const SizedBox(height: 8),
                       TextFormField(
@@ -272,28 +347,32 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Price
+                      // ─── Price with currency formatting ───
                       const Text('Harga Jual', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: FlokowerTheme.darkGray)),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _priceController,
                         decoration: InputDecoration(
-                          hintText: '150000',
+                          hintText: '100.000',
                           prefixText: 'Rp ',
                           prefixStyle: TextStyle(color: FlokowerTheme.mediumGray, fontWeight: FontWeight.w600),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                         ),
                         keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          CurrencyInputFormatter(),
+                        ],
                         validator: (v) {
                           if (v == null || v.trim().isEmpty) return 'Harga harus diisi';
-                          if (double.tryParse(v) == null) return 'Angka tidak valid';
+                          if (CurrencyInputFormatter.parse(v) <= 0) return 'Harga harus lebih dari 0';
                           return null;
                         },
                       ),
                       const SizedBox(height: 16),
 
-                      // Description
+                      // ─── Description ───
                       const Text('Deskripsi', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: FlokowerTheme.darkGray)),
                       const SizedBox(height: 8),
                       TextFormField(
@@ -307,7 +386,7 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
                       ),
                       const SizedBox(height: 24),
 
-                      // Ingredients section
+                      // ─── Ingredients ───
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -384,7 +463,7 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
             ),
             const Divider(height: 1),
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(20),
               child: Row(
                 children: [
                   Expanded(
@@ -396,8 +475,10 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: _submit,
-                      child: Text(isEditing ? 'Perbarui' : 'Simpan'),
+                      onPressed: _isUploading ? null : _submit,
+                      child: _isUploading
+                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                          : Text(isEditing ? 'Perbarui' : 'Simpan'),
                     ),
                   ),
                 ],

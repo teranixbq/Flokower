@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/theme/flokower_theme.dart';
+import '../../../../shared/utils/currency_formatter.dart';
 import '../../../../shared/models/transaction_model.dart';
 import '../../../transactions/presentation/providers/transaction_provider.dart';
 
@@ -25,42 +26,45 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
       appBar: AppBar(title: const Text('Laporan Penjualan')),
       body: Column(
         children: [
-          // Summary
+          // ─── Summary + Filters in ONE white block ───
           Container(
-            padding: const EdgeInsets.all(16),
+            width: double.infinity,
             color: FlokowerTheme.white,
-            child: Row(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(child: _SummaryTile(title: 'Pendapatan', value: 'Rp ${_fmt(totalRevenue)}', color: FlokowerTheme.accentGreen)),
-                const SizedBox(width: 10),
-                Expanded(child: _SummaryTile(title: 'Selesai', value: '${completed.length}', color: FlokowerTheme.accentBlue)),
-                const SizedBox(width: 10),
-                Expanded(child: _SummaryTile(title: 'Batal', value: '${filtered.where((t) => t.isCancelled).length}', color: FlokowerTheme.accentRed)),
+                // Summary row
+                Row(
+                  children: [
+                    Expanded(child: _SummaryTile(title: 'Pendapatan', value: CurrencyInputFormatter.display(totalRevenue), color: FlokowerTheme.accentGreen)),
+                    const SizedBox(width: 10),
+                    Expanded(child: _SummaryTile(title: 'Selesai', value: '${completed.length}', color: FlokowerTheme.accentBlue)),
+                    const SizedBox(width: 10),
+                    Expanded(child: _SummaryTile(title: 'Batal', value: '${filtered.where((t) => t.isCancelled).length}', color: FlokowerTheme.accentRed)),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                // Filter chips
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _FilterChip(label: 'Semua', selected: _filter == 'all', onTap: () => setState(() => _filter = 'all')),
+                      const SizedBox(width: 8),
+                      _FilterChip(label: 'Selesai', selected: _filter == 'completed', onTap: () => setState(() => _filter = 'completed')),
+                      const SizedBox(width: 8),
+                      _FilterChip(label: 'Proses', selected: _filter == 'in_progress', onTap: () => setState(() => _filter = 'in_progress')),
+                      const SizedBox(width: 8),
+                      _FilterChip(label: 'Batal', selected: _filter == 'cancelled', onTap: () => setState(() => _filter = 'cancelled')),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
 
-          // Filters
-          Container(
-            color: FlokowerTheme.white,
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  _FilterChip(label: 'Semua', selected: _filter == 'all', onTap: () => setState(() => _filter = 'all')),
-                  const SizedBox(width: 8),
-                  _FilterChip(label: 'Selesai', selected: _filter == 'completed', onTap: () => setState(() => _filter = 'completed')),
-                  const SizedBox(width: 8),
-                  _FilterChip(label: 'Proses', selected: _filter == 'in_progress', onTap: () => setState(() => _filter = 'in_progress')),
-                  const SizedBox(width: 8),
-                  _FilterChip(label: 'Batal', selected: _filter == 'cancelled', onTap: () => setState(() => _filter = 'cancelled')),
-                ],
-              ),
-            ),
-          ),
-
-          // List
+          // ─── Transaction List ───
           Expanded(
             child: filtered.isEmpty
                 ? Center(
@@ -118,7 +122,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
-                                Text('Rp ${_fmt(tx.totalAmount)}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: FlokowerTheme.black)),
+                                Text(CurrencyInputFormatter.display(tx.totalAmount), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: FlokowerTheme.black)),
                                 const SizedBox(height: 4),
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -143,11 +147,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
       ),
     );
   }
-
-  String _fmt(double n) {
-    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}jt';
-    return n.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.');
-  }
 }
 
 class _SummaryTile extends StatelessWidget {
@@ -169,7 +168,7 @@ class _SummaryTile extends StatelessWidget {
         children: [
           Container(width: 8, height: 8, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(4))),
           const SizedBox(height: 8),
-          Text(value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: FlokowerTheme.black, letterSpacing: -0.3)),
+          Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: FlokowerTheme.black, letterSpacing: -0.3)),
           const SizedBox(height: 2),
           Text(title, style: TextStyle(fontSize: 11, color: FlokowerTheme.mediumGray)),
         ],
