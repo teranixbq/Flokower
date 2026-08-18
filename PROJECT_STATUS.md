@@ -5,15 +5,35 @@
 ### 📱 Flutter App Features:
 ✅ Material Inventory System (CRUD + Real-time)  
 ✅ Product Management with Ingredients Mapping  
+✅ **Smart stock management**: Auto-merge duplicate materials (add to existing stock)  
+✅ **Product image upload**: Required photos stored in Cloudflare R2  
+✅ **Stock adjust dialog**: Quick +/- controls for manual stock adjustments  
+✅ **Uniform product grid layout** (non-bento design)  
 ✅ Stock Validation & Low Stock Warnings  
 ✅ Auto-disable products when materials insufficient  
 ✅ Price History Tracking  
+✅ **Web support** with CORS-enabled browser uploads
+
+### ☁️ Cloud Storage (Cloudflare R2):
+✅ S3-compatible API integration  
+✅ AWS SigV4 signing (pure Dart, no native dependencies)  
+✅ CORS configuration for web uploads  
+✅ Required product images with validation  
+✅ Migration from Firebase Storage to R2  
 
 ### 🔥 Firebase Integration:
+✅ Firestore database (materials, products, transactions)  
+✅ Firebase Authentication  
 ✅ All dependencies configured  
-✅ firebase_options.dart template ready  
+✅ **Fixed transaction errors** on web (moved validation outside runTransaction)  
 ✅ android/build.gradle with Firebase plugin  
 ✅ **7 Complete Setup Guides Created** ⭐
+
+### 🐛 Bug Fixes:
+✅ Fixed Firestore `runTransaction` errors on web  
+✅ Fixed null timestamp crashes with server timestamp  
+✅ Improved error messages for web compatibility  
+✅ CORS support for Cloudflare R2 uploads
 
 ---
 
@@ -60,33 +80,45 @@ Enterprise (>1000 orders/day): ~$10-20/month
 
 ## 📊 What You Can Do NOW:
 
-### Without Firebase (Testing Mode):
+### Running the App:
 ```bash
+# Install dependencies
+flutter pub get
+
+# Run on Chrome (web)
+flutter run -d chrome
+
+# Run on Android device/emulator
 flutter run
-# App works with local storage only
-# Materials & Products will be saved locally
 ```
 
-### With Firebase (Production):
-After completing the 2 steps above:
+### Environment Setup:
+The app requires a `.env` file with Firebase and Cloudflare R2 credentials:
 ```bash
-flutter run
-# Everything syncs to Firebase automatically!
+# Copy template
+cp .env.example .env
+
+# Edit .env and fill in:
+# - Firebase Web App config (from Firebase Console)
+# - Cloudflare R2 credentials (Account ID, Access Key, Secret Key, Bucket, Public URL)
 ```
 
 ---
 
-## 🎯 Next Development Steps:
+## 🎯 Completed Features:
 
-Ready to implement after Firebase setup:
-1. Authentication UI (connect to Firebase Auth)
-2. Transaction System (create orders, stock reservation)
-3. Dashboard Feature (bento grid with real-time metrics)
-4. Reports & Analytics (sales history, Excel export)
-
-All code is ready and waiting! ✅
+✅ **Authentication UI** (Firebase Auth integration)  
+✅ **Transaction System** (create orders, stock reservation, complete/cancel)  
+✅ **Dashboard Feature** (real-time metrics, revenue tracking)  
+✅ **Reports & Analytics** (sales history, Excel export)  
+✅ **Cloud Storage** (migrated from Firebase Storage to Cloudflare R2)  
+✅ **Smart Stock Management** (auto-merge duplicate materials)  
+✅ **Product Image Upload** (required photos with R2 integration)  
+✅ **Stock Adjust Dialog** (quick +/- controls)  
+✅ **Web Support** (CORS-enabled browser uploads)  
+✅ **Bug Fixes** (Firestore transaction errors, null timestamps)
 
 ---
 
-*Project Status: 100% Complete - Only 2 manual steps needed!*  
-*Last Updated: 2024-01-XX*
+*Project Status: 100% Complete - Production Ready!*  
+*Last Updated: 2026-08-19*

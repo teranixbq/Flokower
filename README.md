@@ -5,18 +5,23 @@ Mobile inventory and sales management system for UMKM florists.
 ## ✨ Features (MVP)
 
 - Material & Product CRUD management
+- **Smart stock management**: Auto-merge duplicate materials (add to existing stock)
+- **Product image upload**: Required photos stored in Cloudflare R2
+- **Stock adjust dialog**: Quick +/- controls for manual stock adjustments
 - Soft stock reservation system (in_progress → completed)
 - Custom ingredient override per transaction
 - Real-time multi-user synchronization
-- Bento grid dashboard design
+- **Uniform product grid layout** (non-bento design)
 - Excel export functionality
+- **Web support** with CORS-enabled browser uploads
 
 ## 🛠️ Tech Stack
 
-- **Flutter**: Cross-platform mobile framework
-- **Firebase**: Backend as a Service
+- **Flutter**: Cross-platform mobile framework (Android + Web)
+- **Firebase**: Backend as a Service (Firestore + Auth)
+- **Cloudflare R2**: Image storage (S3-compatible)
 - **Riverpod**: State management
-- **Bento Grid**: Modern UI layout
+- **AWS SigV4**: Secure R2 API signing (pure Dart, no native dependencies)
 
 ## 🚀 Quick Start
 
