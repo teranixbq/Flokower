@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../shared/theme/flokower_theme.dart';
 import '../../../../shared/widgets/settings_button.dart';
 import '../../../inventory/presentation/providers/material_provider.dart';
@@ -15,7 +14,6 @@ class DashboardScreen extends ConsumerWidget {
     final materials = ref.watch(materialProvider);
     final products = ref.watch(productProvider);
     final transactions = ref.watch(transactionProvider);
-    final user = FirebaseAuth.instance.currentUser;
 
     /// Ambil URL gambar produk: pakai `productImageUrl` kalau ada,
     /// fallback ke lookup dari koleksi produk (untuk transaksi lama).
@@ -34,8 +32,10 @@ class DashboardScreen extends ConsumerWidget {
         backgroundColor: FlokowerTheme.offWhite,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
-        title: Row(
-          children: [
+        title: Padding(
+          padding: const EdgeInsets.only(top: 12.0),
+          child: Row(
+            children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: Image.asset(
@@ -49,6 +49,7 @@ class DashboardScreen extends ConsumerWidget {
               const Text('Flokower', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
             ],
           ),
+        ),
         actions: const [SettingsButton()],
       ),
       body: RefreshIndicator(
@@ -64,18 +65,6 @@ class DashboardScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ─── Greeting ───
-              Text(
-                'Selamat datang 👋',
-                style: TextStyle(fontSize: 14, color: FlokowerTheme.mediumGray, fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                user?.displayName ?? 'Pengguna',
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, letterSpacing: -0.3, color: FlokowerTheme.black),
-              ),
-              const SizedBox(height: 24),
-
               // ─── Bento Grid Row 1: Revenue (60%) + 2 Stacked Cards (40%) ───
               SizedBox(
                 height: 180,
