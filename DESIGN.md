@@ -7,58 +7,60 @@
 #### Core Colors
 ```dart
 // Background Colors
-const background = Color(0xFFFFFFFF);        // Pure white - main screen bg
+const background = Color(0xFFF7F7F7);        // Off-white - main screen bg
 const surface = Color(0xFFF8F8F8);           // Light gray - cards/panels
 const card = Color(0xFFFFFFFF);               // White - individual cards
 
 // Text Colors  
-const primaryText = Color(0xFF000000);       // Black - main content
-const secondaryText = Color(0xFF666666);     // Gray - subtitles/hints
-const placeholder = Color(0xFFAAAAAA);       // Light gray - input hints
+const primaryText = Color(0xFF1A1A1A);       // Near-black - main content
+const secondaryText = Color(0xFF888888);     // Medium gray - subtitles/hints
+const placeholder = Color(0xFFCCCCCC);       // Light gray - input hints
 const disabledText = Color(0xFFCCCCCC);      // Disabled state text
 
 // Borders & Dividers
-const border = Color(0xFFE0E0E0);            // Light gray borders
-const divider = Color(0xFFF0F0F0);           // Subtle dividers
-const outline = Color(0xFF000000);           // Black outlines for buttons
+const border = Color(0xFFEEEEEE);            // Light gray borders
+const divider = Color(0xFFE8E8E8);           // Silver dividers
+const outline = Color(0xFF0FAC93);           // Teal outlines (primary)
 
 // Interactive States
-const primary = Color(0xFF000000);           // Black - primary actions
-const primaryHover = Color(0xFF333333);      // Darker black - hover
-const primaryTextWhite = Color(0xFFFFFFFF);  // White on black backgrounds
+const primary = Color(0xFF0FAC93);           // Teal - primary actions (logo color)
+const primaryHover = Color(0xFF0D9B84);      // Darker teal - hover
+const primaryTextWhite = Color(0xFFFFFFFF);  // White on teal backgrounds
 
 // Status Colors (Accent)
-const success = Color(0xFF00C853);           // Green - success states
-const successLight = Color(0xFFE8F5E9);      // Light green bg
-const warning = Color(0xFFFFA000);           // Orange/Yellow - warnings
-const warningLight = Color(0xFFFFF3E0);      // Light yellow bg
-const error = Color(0xFFFF5252);             // Red - errors/alerts
-const errorLight = Color(0xFFFFEBEE);        // Light red bg
-const neutral = Color(0xFF9E9E9E);           // Medium gray - neutral states
+const success = Color(0xFF2D8B4E);           // Green - success states
+const successLight = Color(0xFFE8F5ED);      // Light green bg
+const warning = Color(0xFFC67A2E);           // Orange - warnings
+const warningLight = Color(0xFFFDF3E7);      // Light orange bg
+const error = Color(0xFFC44536);             // Red - errors/alerts
+const errorLight = Color(0xFFFDECEA);        // Light red bg
+const info = Color(0xFF3A6EA5);              // Blue - info states
+const infoLight = Color(0xFFEBF2FA);         // Light blue bg
+const neutral = Color(0xFF888888);           // Medium gray - neutral states
 ```
 
 #### Usage Guidelines
 
 **Backgrounds:**
-- `background` → Main screen surfaces
+- `background` → Main screen surfaces (offWhite #F7F7F7)
 - `surface` → Cards, panels, elevated sections
-- `card` → Individual item cards
+- `card` → Individual item cards (white)
 
 **Text Hierarchy:**
-- `primaryText` → Headlines, body text, labels
-- `secondaryText` → Descriptions, captions, metadata
-- `placeholder` → Empty input fields, loading states
+- `primaryText` → Headlines, body text, labels (near-black #1A1A1A)
+- `secondaryText` → Descriptions, captions, metadata (medium gray #888888)
+- `placeholder` → Empty input fields, loading states (light gray #CCCCCC)
 - `disabledText` → Non-interactive elements
 
 **Borders:**
-- `border` → Card borders, input outlines
-- `divider` → Section separators, list dividers
-- `outline` → Button outlines, active states
+- `border` → Card borders, input outlines (#EEEEEE)
+- `divider` → Section separators, list dividers (silver #E8E8E8)
+- `outline` → Button outlines, active states (teal #0FAC93)
 
 **Interactive Elements:**
-- `primary` → Primary buttons, selected states
-- `primaryHover` → Hover effects (web/desktop)
-- `success`, `warning`, `error` → Status badges, alerts, validators
+- `primary` → Primary buttons, FABs, selected states (teal #0FAC93)
+- `primaryHover` → Hover effects (darker teal #0D9B84)
+- `success`, `warning`, `error`, `info` → Status badges, alerts, validators
 
 ---
 
@@ -80,8 +82,8 @@ const borderDark = Color(0xFF333333);        // Dark borders
 const dividerDark = Color(0xFF2A2A2A);       // Subtle dividers
 
 // Interactive
-const primaryDark = Color(0xFFFFFFFF);       // White buttons
-const primaryHoverDark = Color(0xDDDDDD);    // Hover state
+const primaryDark = Color(0xFF0FAC93);       // Teal buttons (same as light)
+const primaryHoverDark = Color(0xFF0D9B84);  // Darker teal hover
 ```
 
 ---

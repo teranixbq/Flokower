@@ -6,6 +6,7 @@ Mobile inventory and sales management system for UMKM florists.
 
 - Material & Product CRUD management
 - **Smart stock management**: Auto-merge duplicate materials (add to existing stock)
+- **Real-time validation**: Prevent duplicate material names with instant feedback
 - **Product image upload**: Required photos stored in Cloudflare R2
 - **Stock adjust dialog**: Quick +/- controls for manual stock adjustments
 - **Multi-product order flow**: Gallery selection, quantity control per product, aggregated ingredients
@@ -17,6 +18,13 @@ Mobile inventory and sales management system for UMKM florists.
 - **Uniform product grid layout** (non-bento design)
 - Excel export functionality
 - **Web support** with CORS-enabled browser uploads
+
+## 🎨 Design System
+
+- **Primary Color**: Teal (#0fac93) - Matches Flokower logo
+- **Button Style**: Pill-shaped (border radius 50px)
+- **Card Style**: Rounded corners (border radius 20px)
+- **Accent Colors**: Teal for primary actions, with supporting colors for status indicators
 
 ## 🛠️ Tech Stack
 
@@ -43,8 +51,15 @@ cp .env.example .env
 # - Cloudflare R2 credentials (Account ID, Access Key, Secret Key, Bucket, Public URL)
 
 # 4. Run app
-flutter run -d chrome  # Web
+flutter run -d chrome  # Web (recommended for development)
 flutter run            # Android
+```
+
+### 🐛 Web Development Tip
+
+If you encounter shader compilation errors on Chrome, use HTML renderer:
+```bash
+flutter run -d chrome --web-renderer html
 ```
 
 ## 📁 Project Structure
