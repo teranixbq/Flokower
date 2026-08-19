@@ -26,6 +26,7 @@ class FlokowerTheme {
   static const Color accentRedLight = Color(0xFFFDECEA);
   static const Color accentBlue = Color(0xFF3A6EA5);
   static const Color accentBlueLight = Color(0xFFEBF2FA);
+  static const Color accentTeal = Color(0xFF0FAC93); // Logo color
 
   // ─── Light Theme ───
   static ThemeData get light => ThemeData(
@@ -86,10 +87,10 @@ class FlokowerTheme {
     // ─── Elevated Button ───
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: black,
+        backgroundColor: accentTeal,
         foregroundColor: white,
         elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
         textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
       ),
