@@ -33,6 +33,23 @@ class TransactionState {
 
   List<TransactionModel> get inProgressTransactions =>
       transactions.where((t) => t.isInProgress).toList();
+
+  DateTime get _startOfDay {
+    final now = DateTime.now();
+    return DateTime(now.year, now.month, now.day);
+  }
+
+  /// Jumlah transaksi yang selesai HARI INI
+  int get todayCompletedCount => transactions.where((t) {
+    if (!t.isCompleted || t.completedAt == null) return false;
+    return t.completedAt!.isAfter(_startOfDay);
+  }).length;
+
+  /// Total pendapatan HARI INI (dari transaksi yang completedAt >= startOfDay)
+  double get todayRevenue => transactions.where((t) {
+    if (!t.isCompleted || t.completedAt == null) return false;
+    return t.completedAt!.isAfter(_startOfDay);
+  }).fold(0.0, (sum, t) => sum + t.totalAmount);
 }
 
 class TransactionNotifier extends StateNotifier<TransactionState> {

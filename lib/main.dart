@@ -114,7 +114,7 @@ class _MainScreenState extends State<MainScreen> {
           ? FloatingActionButton(
               heroTag: 'new_order',
               onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProductGalleryScreen())),
-              backgroundColor: FlokowerTheme.black,
+              backgroundColor: FlokowerTheme.accentGreen,
               foregroundColor: Colors.white,
               elevation: 4,
               child: const Icon(Icons.add_rounded),

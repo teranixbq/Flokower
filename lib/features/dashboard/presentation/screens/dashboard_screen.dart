@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../shared/theme/flokower_theme.dart';
 import '../../../../shared/widgets/settings_button.dart';
 import '../../../inventory/presentation/providers/material_provider.dart';
@@ -16,7 +14,6 @@ class DashboardScreen extends ConsumerWidget {
     final materials = ref.watch(materialProvider);
     final products = ref.watch(productProvider);
     final transactions = ref.watch(transactionProvider);
-    final user = FirebaseAuth.instance.currentUser;
 
     /// Ambil URL gambar produk: pakai `productImageUrl` kalau ada,
     /// fallback ke lookup dari koleksi produk (untuk transaksi lama).
@@ -57,52 +54,57 @@ class DashboardScreen extends ConsumerWidget {
         },
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ─── Greeting ───
-              Text(
-                'Selamat datang 👋',
-                style: TextStyle(fontSize: 14, color: FlokowerTheme.mediumGray, fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                user?.displayName ?? 'Pengguna',
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, letterSpacing: -0.3, color: FlokowerTheme.black),
-              ),
-              const SizedBox(height: 24),
-
-              // ─── Bento Metrics Grid ───
-              Row(
-                children: [
-                  Expanded(
-                    child: _MetricCard(
-                      label: 'Jumlah Bahan',
-                      value: '${materials.totalMaterials}',
-                      subtitle: 'jenis bahan baku',
-                      color: FlokowerTheme.accentBlue,
+              // ─── Bento Grid Row 1: Revenue (60%) + 2 Stacked Cards (40%) ───
+              SizedBox(
+                height: 180,
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 6,
+                      child: _RevenueCard(
+                        todayRevenue: transactions.todayRevenue,
+                        todayCompletedCount: transactions.todayCompletedCount,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _MetricCard(
-                      label: 'Bahan Menipis',
-                      value: '${materials.lowStockCount}',
-                      subtitle: materials.lowStockCount > 0 ? 'perlu restock!' : 'semua aman',
-                      color: materials.lowStockCount > 0 ? FlokowerTheme.accentOrange : FlokowerTheme.accentGreen,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 4,
+                      child: Column(
+                        children: [
+                          Expanded(
+                            child: _MetricCard(
+                              label: 'Jumlah Bahan',
+                              value: '${materials.totalMaterials}',
+                              color: FlokowerTheme.accentBlue,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Expanded(
+                            child: _MetricCard(
+                              label: 'Bahan Menipis',
+                              value: '${materials.lowStockCount}',
+                              color: materials.lowStockCount > 0 ? FlokowerTheme.accentOrange : FlokowerTheme.accentGreen,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               const SizedBox(height: 12),
+
+              // ─── Bento Grid Row 2: 2 Equal Cards ───
               Row(
                 children: [
                   Expanded(
                     child: _MetricCard(
                       label: 'Produk Aktif',
                       value: '${products.activeProductsCount}',
-                      subtitle: 'siap dijual',
                       color: FlokowerTheme.accentGreen,
                     ),
                   ),
@@ -111,16 +113,11 @@ class DashboardScreen extends ConsumerWidget {
                     child: _MetricCard(
                       label: 'Order Proses',
                       value: '${transactions.inProgressCount}',
-                      subtitle: 'sedang dikerjakan',
                       color: transactions.inProgressCount > 0 ? FlokowerTheme.accentOrange : FlokowerTheme.mediumGray,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
-
-              // ─── Revenue Card ───
-              _RevenueCard(),
               const SizedBox(height: 24),
 
               // ─── Recent Transactions ───
@@ -247,61 +244,44 @@ class DashboardScreen extends ConsumerWidget {
 }
 
 class _RevenueCard extends StatelessWidget {
+  final double todayRevenue;
+  final int todayCompletedCount;
+
+  const _RevenueCard({
+    required this.todayRevenue,
+    required this.todayCompletedCount,
+  });
+
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('transactions').where('status', isEqualTo: 'completed').snapshots(),
-      builder: (context, snapshot) {
-        double todayRevenue = 0;
-        int totalCompleted = 0;
-        if (snapshot.hasData) {
-          final now = DateTime.now();
-          final startOfDay = DateTime(now.year, now.month, now.day);
-          for (var doc in snapshot.data!.docs) {
-            final data = doc.data() as Map<String, dynamic>;
-            totalCompleted++;
-            final completedAt = (data['completedAt'] as Timestamp?)?.toDate();
-            if (completedAt != null && completedAt.isAfter(startOfDay)) {
-              todayRevenue += (data['totalAmount'] as num?)?.toDouble() ?? 0;
-            }
-          }
-        }
-        
-        return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: FlokowerTheme.black,
-            borderRadius: BorderRadius.circular(18),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: FlokowerTheme.black,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Text('Hari Ini', style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w600)),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Text('Hari Ini', style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w600)),
-                  ),
-                  const Spacer(),
-                  Text('$totalCompleted order selesai', style: const TextStyle(color: Colors.white38, fontSize: 12)),
-                ],
-              ),
-              const SizedBox(height: 16),
-              const Text('Pendapatan', style: TextStyle(color: Colors.white54, fontSize: 13, fontWeight: FontWeight.w500)),
-              const SizedBox(height: 4),
-              Text(
-                'Rp ${_fmt(todayRevenue)}',
-                style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w800, letterSpacing: -1),
-              ),
-            ],
+          const Spacer(),
+          const Text('Pendapatan', style: TextStyle(color: Colors.white54, fontSize: 13, fontWeight: FontWeight.w500)),
+          const SizedBox(height: 4),
+          Text(
+            'Rp ${_fmt(todayRevenue)}',
+            style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w800, letterSpacing: -1),
           ),
-        );
-      },
+          const Spacer(),
+        ],
+      ),
     );
   }
 
@@ -314,10 +294,9 @@ class _RevenueCard extends StatelessWidget {
 class _MetricCard extends StatelessWidget {
   final String label;
   final String value;
-  final String subtitle;
   final Color color;
 
-  const _MetricCard({required this.label, required this.value, required this.subtitle, required this.color});
+  const _MetricCard({required this.label, required this.value, required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -330,6 +309,7 @@ class _MetricCard extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Row(
             children: [
@@ -341,10 +321,8 @@ class _MetricCard extends StatelessWidget {
               Text(label, style: TextStyle(fontSize: 12, color: FlokowerTheme.mediumGray, fontWeight: FontWeight.w500)),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Text(value, style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: FlokowerTheme.black, letterSpacing: -1)),
-          const SizedBox(height: 2),
-          Text(subtitle, style: TextStyle(fontSize: 11, color: FlokowerTheme.mediumGray)),
         ],
       ),
     );
