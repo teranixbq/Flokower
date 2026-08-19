@@ -170,7 +170,8 @@ class _CreateOrderScreenState extends ConsumerState<CreateOrderScreen> {
       }
 
       if (mounted) {
-        Navigator.pop(context, true);
+        // Pop back to home screen (MainScreen) instead of just ProductGalleryScreen
+        Navigator.of(context).popUntil((route) => route.isFirst);
         showToast(context, message: '${widget.selectedProducts.length} order berhasil dibuat! Status: Dalam Proses', type: ToastType.success);
       }
     } catch (e) {
