@@ -32,8 +32,9 @@ class DashboardScreen extends ConsumerWidget {
         backgroundColor: FlokowerTheme.offWhite,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
+        toolbarHeight: 100,
         title: Padding(
-          padding: const EdgeInsets.only(top: 12.0),
+          padding: const EdgeInsets.only(top: 50.0),
           child: Row(
             children: [
               ClipRRect(
