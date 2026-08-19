@@ -33,7 +33,7 @@ class DashboardScreen extends ConsumerWidget {
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         title: Padding(
-          padding: const EdgeInsets.only(top: 8.0),
+          padding: const EdgeInsets.only(top: 16.0),
           child: Row(
             children: [
               ClipRRect(
@@ -169,6 +169,13 @@ class DashboardScreen extends ConsumerWidget {
                     color: FlokowerTheme.white,
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: const Color(0xFFEEEEEE)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
                   child: Row(
                     children: [
