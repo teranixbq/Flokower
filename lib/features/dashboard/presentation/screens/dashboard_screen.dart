@@ -51,7 +51,12 @@ class DashboardScreen extends ConsumerWidget {
             ],
           ),
         ),
-        actions: const [SettingsButton()],
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(top: 50.0, right: 16.0),
+            child: const SettingsButton(),
+          ),
+        ],
       ),
       body: RefreshIndicator(
         color: FlokowerTheme.black,
