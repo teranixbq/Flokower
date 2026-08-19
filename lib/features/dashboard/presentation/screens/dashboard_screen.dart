@@ -38,8 +38,8 @@ class DashboardScreen extends ConsumerWidget {
               borderRadius: BorderRadius.circular(12),
               child: Image.asset(
                 'assets/images/flokower-logo.png',
-                width: 48,
-                height: 48,
+                width: 56,
+                height: 56,
                 fit: BoxFit.cover,
               ),
             ),
@@ -58,7 +58,7 @@ class DashboardScreen extends ConsumerWidget {
         },
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+          padding: const EdgeInsets.fromLTRB(16, 24, 16, 100),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -340,24 +340,24 @@ class _MetricCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          Text(
+            label,
+            style: TextStyle(fontSize: 11, color: FlokowerTheme.mediumGray, fontWeight: FontWeight.w500),
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 8),
           Row(
             children: [
-              Icon(icon, size: 14, color: color),
-              const SizedBox(width: 4),
+              Icon(icon, size: 24, color: color),
+              const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  label,
-                  style: TextStyle(fontSize: 11, color: FlokowerTheme.mediumGray, fontWeight: FontWeight.w500),
+                  value,
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: FlokowerTheme.black, letterSpacing: -1),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: FlokowerTheme.black, letterSpacing: -1),
-            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
