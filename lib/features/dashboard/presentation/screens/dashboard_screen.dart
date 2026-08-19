@@ -323,7 +323,7 @@ class _MetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: FlokowerTheme.white,
         borderRadius: BorderRadius.circular(16),
@@ -342,13 +342,23 @@ class _MetricCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, size: 16, color: color),
-              const SizedBox(width: 6),
-              Text(label, style: TextStyle(fontSize: 12, color: FlokowerTheme.mediumGray, fontWeight: FontWeight.w500)),
+              Icon(icon, size: 14, color: color),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(fontSize: 11, color: FlokowerTheme.mediumGray, fontWeight: FontWeight.w500),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 12),
-          Text(value, style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: FlokowerTheme.black, letterSpacing: -1)),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: FlokowerTheme.black, letterSpacing: -1),
+            overflow: TextOverflow.ellipsis,
+          ),
         ],
       ),
     );
