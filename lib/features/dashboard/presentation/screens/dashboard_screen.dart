@@ -32,20 +32,23 @@ class DashboardScreen extends ConsumerWidget {
         backgroundColor: FlokowerTheme.offWhite,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
-        title: Row(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.asset(
-                'assets/images/flokower-logo.png',
-                width: 56,
-                height: 56,
-                fit: BoxFit.cover,
+        title: Padding(
+          padding: const EdgeInsets.only(top: 8.0),
+          child: Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.asset(
+                  'assets/images/flokower-logo.png',
+                  width: 56,
+                  height: 56,
+                  fit: BoxFit.cover,
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            const Text('Flokower', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
-          ],
+              const SizedBox(width: 12),
+              const Text('Flokower', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
+            ],
+          ),
         ),
         actions: const [SettingsButton()],
       ),
