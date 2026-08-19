@@ -91,6 +91,7 @@ class _MainScreenState extends State<MainScreen> {
 
   final _screens = const [
     DashboardScreen(),
+    ActiveOrdersScreen(),
     StockScreen(),
     ReportsScreen(),
   ];
@@ -104,31 +105,19 @@ class _MainScreenState extends State<MainScreen> {
         onTap: (i) => setState(() => _currentIndex = i),
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.grid_view_rounded), activeIcon: Icon(Icons.grid_view_rounded), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.pending_actions_outlined), activeIcon: Icon(Icons.pending_actions_rounded), label: 'Order'),
           BottomNavigationBarItem(icon: Icon(Icons.inventory_2_outlined), activeIcon: Icon(Icons.inventory_2_rounded), label: 'Stok'),
           BottomNavigationBarItem(icon: Icon(Icons.bar_chart_outlined), activeIcon: Icon(Icons.bar_chart_rounded), label: 'Laporan'),
         ],
       ),
       floatingActionButton: _currentIndex == 0
-          ? Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                FloatingActionButton.small(
-                  heroTag: 'active_orders',
-                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ActiveOrdersScreen())),
-                  backgroundColor: FlokowerTheme.charcoal,
-                  foregroundColor: Colors.white,
-                  child: const Icon(Icons.pending_actions_rounded, size: 20),
-                ),
-                const SizedBox(height: 12),
-                FloatingActionButton(
-                  heroTag: 'new_order',
-                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProductGalleryScreen())),
-                  backgroundColor: FlokowerTheme.black,
-                  foregroundColor: Colors.white,
-                  elevation: 4,
-                  child: const Icon(Icons.add_rounded),
-                ),
-              ],
+          ? FloatingActionButton(
+              heroTag: 'new_order',
+              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProductGalleryScreen())),
+              backgroundColor: FlokowerTheme.black,
+              foregroundColor: Colors.white,
+              elevation: 4,
+              child: const Icon(Icons.add_rounded),
             )
           : null,
     );
