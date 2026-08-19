@@ -27,20 +27,24 @@ class DashboardScreen extends ConsumerWidget {
     }
 
     return Scaffold(
+      backgroundColor: FlokowerTheme.offWhite,
       appBar: AppBar(
+        backgroundColor: FlokowerTheme.offWhite,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
         title: Row(
           children: [
             ClipRRect(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
               child: Image.asset(
                 'assets/images/flokower-logo.png',
-                width: 32,
-                height: 32,
+                width: 48,
+                height: 48,
                 fit: BoxFit.cover,
               ),
             ),
-            const SizedBox(width: 10),
-            const Text('Flokower'),
+            const SizedBox(width: 12),
+            const Text('Flokower', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
           ],
         ),
         actions: const [SettingsButton()],
@@ -64,7 +68,6 @@ class DashboardScreen extends ConsumerWidget {
                 child: Row(
                   children: [
                     Expanded(
-                      flex: 6,
                       child: _RevenueCard(
                         todayRevenue: transactions.todayRevenue,
                         todayCompletedCount: transactions.todayCompletedCount,
@@ -72,7 +75,6 @@ class DashboardScreen extends ConsumerWidget {
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      flex: 4,
                       child: Column(
                         children: [
                           Expanded(
@@ -80,6 +82,7 @@ class DashboardScreen extends ConsumerWidget {
                               label: 'Jumlah Bahan',
                               value: '${materials.totalMaterials}',
                               color: FlokowerTheme.accentBlue,
+                              icon: Icons.inventory_2_outlined,
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -88,6 +91,7 @@ class DashboardScreen extends ConsumerWidget {
                               label: 'Bahan Menipis',
                               value: '${materials.lowStockCount}',
                               color: materials.lowStockCount > 0 ? FlokowerTheme.accentOrange : FlokowerTheme.accentGreen,
+                              icon: Icons.warning_amber_rounded,
                             ),
                           ),
                         ],
@@ -108,6 +112,7 @@ class DashboardScreen extends ConsumerWidget {
                         label: 'Produk Aktif',
                         value: '${products.activeProductsCount}',
                         color: FlokowerTheme.accentGreen,
+                        icon: Icons.local_florist_outlined,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -116,6 +121,7 @@ class DashboardScreen extends ConsumerWidget {
                         label: 'Order Proses',
                         value: '${transactions.inProgressCount}',
                         color: transactions.inProgressCount > 0 ? FlokowerTheme.accentOrange : FlokowerTheme.mediumGray,
+                        icon: Icons.pending_actions_outlined,
                       ),
                     ),
                   ],
@@ -263,6 +269,13 @@ class _RevenueCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: FlokowerTheme.black,
         borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: FlokowerTheme.black.withOpacity(0.1),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -298,8 +311,14 @@ class _MetricCard extends StatelessWidget {
   final String label;
   final String value;
   final Color color;
+  final IconData icon;
 
-  const _MetricCard({required this.label, required this.value, required this.color});
+  const _MetricCard({
+    required this.label,
+    required this.value,
+    required this.color,
+    required this.icon,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -309,6 +328,13 @@ class _MetricCard extends StatelessWidget {
         color: FlokowerTheme.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFEEEEEE)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -316,10 +342,7 @@ class _MetricCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Container(
-                width: 8, height: 8,
-                decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(4)),
-              ),
+              Icon(icon, size: 16, color: color),
               const SizedBox(width: 6),
               Text(label, style: TextStyle(fontSize: 12, color: FlokowerTheme.mediumGray, fontWeight: FontWeight.w500)),
             ],
