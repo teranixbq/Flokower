@@ -167,9 +167,9 @@ class FlokowerTheme {
 
     // ─── Tab Bar ───
     tabBarTheme: const TabBarThemeData(
-      labelColor: black,
+      labelColor: accentTeal,
       unselectedLabelColor: mediumGray,
-      indicatorColor: black,
+      indicatorColor: accentTeal,
       indicatorSize: TabBarIndicatorSize.label,
       labelStyle: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
       unselectedLabelStyle: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),

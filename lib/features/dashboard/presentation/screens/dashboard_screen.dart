@@ -283,11 +283,11 @@ class _RevenueCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: FlokowerTheme.black,
-        borderRadius: BorderRadius.circular(18),
+        color: FlokowerTheme.accentTeal,
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: FlokowerTheme.black.withOpacity(0.1),
+            color: FlokowerTheme.accentTeal.withOpacity(0.3),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -342,7 +342,7 @@ class _MetricCard extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: FlokowerTheme.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: const Color(0xFFEEEEEE)),
         boxShadow: [
           BoxShadow(

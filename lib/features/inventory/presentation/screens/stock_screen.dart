@@ -59,7 +59,7 @@ class _StockScreenState extends ConsumerState<StockScreen> with SingleTickerProv
             _showProductForm(context, null);
           }
         },
-        backgroundColor: FlokowerTheme.black,
+        backgroundColor: FlokowerTheme.accentTeal,
         foregroundColor: Colors.white,
         child: const Icon(Icons.add_rounded),
       ),
@@ -126,7 +126,7 @@ class _MaterialsTab extends ConsumerWidget {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: FlokowerTheme.white,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(20),
               border: Border.all(color: material.isLowStock ? FlokowerTheme.accentOrange.withOpacity(0.4) : const Color(0xFFEEEEEE)),
             ),
             child: Row(
@@ -222,7 +222,7 @@ class _ProductsTab extends ConsumerWidget {
           child: Container(
             decoration: BoxDecoration(
               color: FlokowerTheme.white,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(20),
               border: Border.all(color: product.isActive ? const Color(0xFFEEEEEE) : FlokowerTheme.accentRed.withOpacity(0.3)),
             ),
             clipBehavior: Clip.antiAlias,
