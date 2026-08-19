@@ -99,24 +99,27 @@ class DashboardScreen extends ConsumerWidget {
               const SizedBox(height: 12),
 
               // ─── Bento Grid Row 2: 2 Equal Cards ───
-              Row(
-                children: [
-                  Expanded(
-                    child: _MetricCard(
-                      label: 'Produk Aktif',
-                      value: '${products.activeProductsCount}',
-                      color: FlokowerTheme.accentGreen,
+              SizedBox(
+                height: 100,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _MetricCard(
+                        label: 'Produk Aktif',
+                        value: '${products.activeProductsCount}',
+                        color: FlokowerTheme.accentGreen,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _MetricCard(
-                      label: 'Order Proses',
-                      value: '${transactions.inProgressCount}',
-                      color: transactions.inProgressCount > 0 ? FlokowerTheme.accentOrange : FlokowerTheme.mediumGray,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _MetricCard(
+                        label: 'Order Proses',
+                        value: '${transactions.inProgressCount}',
+                        color: transactions.inProgressCount > 0 ? FlokowerTheme.accentOrange : FlokowerTheme.mediumGray,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               const SizedBox(height: 24),
 
