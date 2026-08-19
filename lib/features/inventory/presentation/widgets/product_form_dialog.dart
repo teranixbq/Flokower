@@ -206,6 +206,46 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
     }
   }
 
+  Future<void> _editIngredient(int index) async {
+    final ing = _selectedIngredients[index];
+    final qtyController = TextEditingController(text: ing.quantityNeeded.toString());
+    
+    final qtyResult = await showDialog<int>(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: Text('Edit ${_getMaterialName(ing.materialId)}', style: const TextStyle(fontWeight: FontWeight.w700)),
+          content: TextField(
+            controller: qtyController,
+            decoration: InputDecoration(
+              labelText: 'Jumlah Dibutuhkan',
+              hintText: 'Contoh: 10',
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            keyboardType: TextInputType.number,
+            autofocus: true,
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, int.tryParse(qtyController.text)),
+              child: const Text('Simpan'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (qtyResult != null && qtyResult > 0) {
+      setState(() {
+        _selectedIngredients[index] = ProductIngredient(
+          materialId: ing.materialId,
+          quantityNeeded: qtyResult,
+        );
+      });
+    }
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -481,6 +521,14 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
                                     ],
                                   ),
                                 ),
+                                GestureDetector(
+                                  onTap: () => _editIngredient(i),
+                                  child: const Padding(
+                                    padding: EdgeInsets.all(4),
+                                    child: Icon(Icons.edit_rounded, size: 18, color: FlokowerTheme.accentBlue),
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
                                 GestureDetector(
                                   onTap: () => setState(() => _selectedIngredients.removeAt(i)),
                                   child: const Padding(

@@ -4,12 +4,34 @@ import '../../../../shared/theme/flokower_theme.dart';
 import '../../../../shared/widgets/toast.dart';
 import '../../../../shared/models/transaction_model.dart';
 import '../../presentation/providers/transaction_provider.dart';
+import '../../../inventory/presentation/providers/product_provider.dart';
 
-class ActiveOrdersScreen extends ConsumerWidget {
+class ActiveOrdersScreen extends ConsumerStatefulWidget {
   const ActiveOrdersScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ActiveOrdersScreen> createState() => _ActiveOrdersScreenState();
+}
+
+class _ActiveOrdersScreenState extends ConsumerState<ActiveOrdersScreen> {
+  final Set<String> _processingIds = {};
+
+  /// Ambil URL gambar produk: pakai `productImageUrl` kalau ada,
+  /// fallback ke lookup dari koleksi produk (untuk transaksi lama).
+  String? _getProductImageUrl(TransactionModel tx) {
+    if (tx.productImageUrl != null && tx.productImageUrl!.isNotEmpty) {
+      return tx.productImageUrl;
+    }
+    try {
+      final product = ref.read(productProvider.notifier).productById(tx.productId);
+      return product.imageUrl;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final transactions = ref.watch(transactionProvider).inProgressTransactions;
 
     return Scaffold(
@@ -64,7 +86,15 @@ class ActiveOrdersScreen extends ConsumerWidget {
                                     color: isLong ? FlokowerTheme.accentOrangeLight : FlokowerTheme.accentBlueLight,
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: Icon(Icons.hourglass_empty_rounded, color: isLong ? FlokowerTheme.accentOrange : FlokowerTheme.accentBlue, size: 22),
+                                  child: Builder(builder: (_) {
+                                    final imgUrl = _getProductImageUrl(tx);
+                                    return imgUrl != null && imgUrl.isNotEmpty
+                                        ? ClipRRect(
+                                            borderRadius: BorderRadius.circular(12),
+                                            child: Image.network(imgUrl, fit: BoxFit.cover, errorBuilder: (_, __, ___) => _FallbackIcon(isLong: isLong)),
+                                          )
+                                        : _FallbackIcon(isLong: isLong);
+                                  }),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
@@ -130,8 +160,10 @@ class ActiveOrdersScreen extends ConsumerWidget {
                           children: [
                             Expanded(
                               child: OutlinedButton.icon(
-                                onPressed: () => _cancelOrder(context, ref, tx),
-                                icon: const Icon(Icons.close_rounded, size: 18),
+                                onPressed: _processingIds.contains(tx.id) ? null : () => _cancelOrder(context, ref, tx),
+                                icon: _processingIds.contains(tx.id)
+                                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                                    : const Icon(Icons.close_rounded, size: 18),
                                 label: const Text('Batalkan'),
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: FlokowerTheme.accentRed,
@@ -143,8 +175,10 @@ class ActiveOrdersScreen extends ConsumerWidget {
                             const SizedBox(width: 12),
                             Expanded(
                               child: ElevatedButton.icon(
-                                onPressed: () => _completeOrder(context, ref, tx),
-                                icon: const Icon(Icons.check_rounded, size: 18),
+                                onPressed: _processingIds.contains(tx.id) ? null : () => _completeOrder(context, ref, tx),
+                                icon: _processingIds.contains(tx.id)
+                                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                    : const Icon(Icons.check_rounded, size: 18),
                                 label: const Text('Selesai'),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: FlokowerTheme.accentGreen,
@@ -181,11 +215,14 @@ class ActiveOrdersScreen extends ConsumerWidget {
       ),
     );
     if (confirm == true) {
+      setState(() => _processingIds.add(tx.id));
       try {
         await ref.read(transactionProvider.notifier).completeTransaction(tx.id);
         if (context.mounted) showToast(context, message: 'Order selesai! Stok telah diperbarui.', type: ToastType.success);
       } catch (e) {
         if (context.mounted) showToast(context, message: 'Error: $e', type: ToastType.error);
+      } finally {
+        if (mounted) setState(() => _processingIds.remove(tx.id));
       }
     }
   }
@@ -207,11 +244,14 @@ class ActiveOrdersScreen extends ConsumerWidget {
       ),
     );
     if (confirm == true) {
+      setState(() => _processingIds.add(tx.id));
       try {
         await ref.read(transactionProvider.notifier).cancelTransaction(tx.id);
         if (context.mounted) showToast(context, message: 'Order dibatalkan. Stok dikembalikan.', type: ToastType.warning);
       } catch (e) {
         if (context.mounted) showToast(context, message: 'Error: $e', type: ToastType.error);
+      } finally {
+        if (mounted) setState(() => _processingIds.remove(tx.id));
       }
     }
   }
@@ -219,5 +259,19 @@ class ActiveOrdersScreen extends ConsumerWidget {
   String _fmt(double n) {
     if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}jt';
     return n.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.');
+  }
+}
+
+class _FallbackIcon extends StatelessWidget {
+  final bool isLong;
+  const _FallbackIcon({required this.isLong});
+
+  @override
+  Widget build(BuildContext context) {
+    return Icon(
+      Icons.hourglass_empty_rounded,
+      color: isLong ? FlokowerTheme.accentOrange : FlokowerTheme.accentBlue,
+      size: 22,
+    );
   }
 }

@@ -5,6 +5,7 @@ import '../../../../shared/utils/currency_formatter.dart';
 import '../../../../shared/widgets/settings_button.dart';
 import '../../../../shared/models/transaction_model.dart';
 import '../../../transactions/presentation/providers/transaction_provider.dart';
+import '../../../inventory/presentation/providers/product_provider.dart';
 
 class ReportsScreen extends ConsumerStatefulWidget {
   const ReportsScreen({super.key});
@@ -15,6 +16,20 @@ class ReportsScreen extends ConsumerStatefulWidget {
 
 class _ReportsScreenState extends ConsumerState<ReportsScreen> {
   String _filter = 'all';
+
+  /// Ambil URL gambar produk: pakai `productImageUrl` kalau ada,
+  /// fallback ke lookup dari koleksi produk (untuk transaksi lama).
+  String? _getProductImageUrl(TransactionModel tx) {
+    if (tx.productImageUrl != null && tx.productImageUrl!.isNotEmpty) {
+      return tx.productImageUrl;
+    }
+    try {
+      final products = ref.read(productProvider).products;
+      return products.firstWhere((p) => p.id == tx.productId).imageUrl;
+    } catch (_) {
+      return null;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -101,11 +116,28 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                                 color: tx.isCompleted ? FlokowerTheme.accentGreenLight : tx.isCancelled ? FlokowerTheme.accentRedLight : FlokowerTheme.accentOrangeLight,
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              child: Icon(
-                                tx.isCompleted ? Icons.check_rounded : tx.isCancelled ? Icons.close_rounded : Icons.hourglass_empty_rounded,
-                                size: 18,
-                                color: tx.isCompleted ? FlokowerTheme.accentGreen : tx.isCancelled ? FlokowerTheme.accentRed : FlokowerTheme.accentOrange,
-                              ),
+                              child: Builder(builder: (_) {
+                                final imgUrl = _getProductImageUrl(tx);
+                                if (imgUrl != null && imgUrl.isNotEmpty) {
+                                  return ClipRRect(
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: Image.network(
+                                      imgUrl,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) => Icon(
+                                        tx.isCompleted ? Icons.check_rounded : tx.isCancelled ? Icons.close_rounded : Icons.hourglass_empty_rounded,
+                                        size: 18,
+                                        color: tx.isCompleted ? FlokowerTheme.accentGreen : tx.isCancelled ? FlokowerTheme.accentRed : FlokowerTheme.accentOrange,
+                                      ),
+                                    ),
+                                  );
+                                }
+                                return Icon(
+                                  tx.isCompleted ? Icons.check_rounded : tx.isCancelled ? Icons.close_rounded : Icons.hourglass_empty_rounded,
+                                  size: 18,
+                                  color: tx.isCompleted ? FlokowerTheme.accentGreen : tx.isCancelled ? FlokowerTheme.accentRed : FlokowerTheme.accentOrange,
+                                );
+                              }),
                             ),
                             const SizedBox(width: 12),
                             Expanded(

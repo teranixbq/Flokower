@@ -20,6 +20,8 @@ class _MaterialFormState extends ConsumerState<MaterialForm> {
   String _selectedUnit = 'lembar';
   final _quantityController = TextEditingController();
   final _thresholdController = TextEditingController(text: '10');
+  bool _isSaving = false;
+  bool _isNameDuplicate = false;
 
   bool get isEditing => widget.material != null;
 
@@ -31,6 +33,7 @@ class _MaterialFormState extends ConsumerState<MaterialForm> {
       _selectedUnit = widget.material!.unit;
       _quantityController.text = widget.material!.currentQuantity.toString();
       _thresholdController.text = widget.material!.threshold.toString();
+      _checkNameDuplicate(widget.material!.name);
     }
   }
 
@@ -42,8 +45,32 @@ class _MaterialFormState extends ConsumerState<MaterialForm> {
     super.dispose();
   }
 
+  void _checkNameDuplicate(String name) {
+    final trimmedName = name.trim();
+    if (trimmedName.isEmpty) {
+      setState(() => _isNameDuplicate = false);
+      return;
+    }
+
+    final notifier = ref.read(materialProvider.notifier);
+    final existing = notifier.findByName(trimmedName);
+    
+    // Jika editing, abaikan material yang sedang diedit
+    if (isEditing && existing?.id == widget.material!.id) {
+      setState(() => _isNameDuplicate = false);
+    } else {
+      setState(() => _isNameDuplicate = existing != null);
+    }
+  }
+
+  bool get _isFormValid {
+    return !_isNameDuplicate && !_isSaving;
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isSaving = true);
 
     final dialogContext = context;
     final notifier = ref.read(materialProvider.notifier);
@@ -142,6 +169,10 @@ class _MaterialFormState extends ConsumerState<MaterialForm> {
       if (dialogContext.mounted) {
         showToast(dialogContext, message: 'Gagal menyimpan: $e', type: ToastType.error);
       }
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
     }
   }
 
@@ -193,8 +224,14 @@ class _MaterialFormState extends ConsumerState<MaterialForm> {
                           hintText: 'Contoh: Mawar Merah',
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          errorText: _isNameDuplicate ? 'Nama bahan sudah ada' : null,
                         ),
-                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Nama harus diisi' : null,
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty) return 'Nama harus diisi';
+                          if (_isNameDuplicate) return 'Nama bahan sudah ada';
+                          return null;
+                        },
+                        onChanged: _checkNameDuplicate,
                       ),
                       const SizedBox(height: 20),
                       const Text('Satuan', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: FlokowerTheme.darkGray)),
@@ -265,8 +302,10 @@ class _MaterialFormState extends ConsumerState<MaterialForm> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: _submit,
-                      child: Text(isEditing ? 'Perbarui' : 'Simpan'),
+                      onPressed: _isFormValid ? _submit : null,
+                      child: _isSaving
+                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                          : Text(isEditing ? 'Perbarui' : 'Simpan'),
                     ),
                   ),
                 ],

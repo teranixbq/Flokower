@@ -28,6 +28,10 @@ class ProductNotifier extends StateNotifier<ProductState> {
   final ProductRepository _repository;
   ProductNotifier(this._repository) : super(const ProductState());
 
+  /// Cari produk berdasarkan ID. Throw jika tidak ditemukan.
+  Product productById(String id) =>
+      state.products.firstWhere((p) => p.id == id);
+
   Future<void> loadProducts() async {
     try {
       state = state.copyWith(isLoading: true, error: null);

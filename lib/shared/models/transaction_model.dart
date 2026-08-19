@@ -4,6 +4,7 @@ class TransactionModel {
   final String id;
   final String productId;
   final String productName;
+  final String? productImageUrl;
   final double productPriceAtSale;
   final int quantity;
   final double totalAmount;
@@ -24,6 +25,7 @@ class TransactionModel {
     required this.id,
     required this.productId,
     required this.productName,
+    this.productImageUrl,
     required this.productPriceAtSale,
     required this.quantity,
     required this.totalAmount,
@@ -60,6 +62,7 @@ class TransactionModel {
       id: doc.id,
       productId: data['productId'] ?? '',
       productName: data['productName'] ?? '',
+      productImageUrl: data['productImageUrl'],
       productPriceAtSale: (data['productPriceAtSale'] as num?)?.toDouble() ?? 0.0,
       quantity: data['quantity'] ?? 1,
       totalAmount: (data['totalAmount'] as num?)?.toDouble() ?? 0.0,
@@ -82,6 +85,7 @@ class TransactionModel {
     return {
       'productId': productId,
       'productName': productName,
+      'productImageUrl': productImageUrl,
       'productPriceAtSale': productPriceAtSale,
       'quantity': quantity,
       'totalAmount': totalAmount,
@@ -111,6 +115,7 @@ class TransactionModel {
       id: id,
       productId: productId,
       productName: productName,
+      productImageUrl: productImageUrl,
       productPriceAtSale: productPriceAtSale,
       quantity: quantity,
       totalAmount: totalAmount,

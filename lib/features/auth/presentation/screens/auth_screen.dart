@@ -84,13 +84,10 @@ class _AuthScreenState extends State<AuthScreen> {
               const SizedBox(height: 80),
               // Logo
               Center(
-                child: Container(
-                  width: 72, height: 72,
-                  decoration: BoxDecoration(
-                    color: FlokowerTheme.black,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Icon(Icons.local_florist_rounded, color: Colors.white, size: 36),
+                child: Image.asset(
+                  'assets/images/flokower-logo.png',
+                  width: 120,
+                  height: 120,
                 ),
               ),
               const SizedBox(height: 24),

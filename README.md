@@ -8,6 +8,9 @@ Mobile inventory and sales management system for UMKM florists.
 - **Smart stock management**: Auto-merge duplicate materials (add to existing stock)
 - **Product image upload**: Required photos stored in Cloudflare R2
 - **Stock adjust dialog**: Quick +/- controls for manual stock adjustments
+- **Multi-product order flow**: Gallery selection, quantity control per product, aggregated ingredients
+- **Edit ingredient quantity**: Modify material requirements directly in product form
+- **Loading indicators**: All async operations show visual feedback
 - Soft stock reservation system (in_progress → completed)
 - Custom ingredient override per transaction
 - Real-time multi-user synchronization
@@ -33,11 +36,15 @@ cd Flokower
 # 2. Install dependencies
 flutter pub get
 
-# 3. Configure Firebase
-# See docs/FIREBASE_SETUP.md for detailed instructions
+# 3. Configure environment
+cp .env.example .env
+# Edit .env and fill in:
+# - Firebase Web App config (from Firebase Console)
+# - Cloudflare R2 credentials (Account ID, Access Key, Secret Key, Bucket, Public URL)
 
 # 4. Run app
-flutter run
+flutter run -d chrome  # Web
+flutter run            # Android
 ```
 
 ## 📁 Project Structure

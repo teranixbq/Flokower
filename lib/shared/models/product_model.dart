@@ -169,6 +169,16 @@ class ProductIngredient {
       quantityNeeded: map['quantityNeeded'] ?? 0,
     );
   }
+
+  ProductIngredient copyWith({
+    String? materialId,
+    int? quantityNeeded,
+  }) {
+    return ProductIngredient(
+      materialId: materialId ?? this.materialId,
+      quantityNeeded: quantityNeeded ?? this.quantityNeeded,
+    );
+  }
 }
 
 class PriceHistoryEntry {

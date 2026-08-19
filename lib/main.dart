@@ -9,7 +9,7 @@ import 'shared/theme/flokower_theme.dart';
 import 'features/auth/presentation/screens/auth_screen.dart';
 import 'features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'features/inventory/presentation/screens/stock_screen.dart';
-import 'features/transactions/presentation/screens/create_order_screen.dart';
+import 'features/transactions/presentation/screens/product_gallery_screen.dart';
 import 'features/transactions/presentation/screens/active_orders_screen.dart';
 import 'features/reports/presentation/screens/reports_screen.dart';
 
@@ -55,13 +55,10 @@ class _AuthGate extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Container(
-                    width: 56, height: 56,
-                    decoration: BoxDecoration(
-                      color: FlokowerTheme.black,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: const Icon(Icons.local_florist, color: Colors.white, size: 28),
+                  Image.asset(
+                    'assets/images/flokower-logo.png',
+                    width: 120,
+                    height: 120,
                   ),
                   const SizedBox(height: 24),
                   const Text('Flokower', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, letterSpacing: -0.5)),
@@ -125,7 +122,7 @@ class _MainScreenState extends State<MainScreen> {
                 const SizedBox(height: 12),
                 FloatingActionButton(
                   heroTag: 'new_order',
-                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateOrderScreen())),
+                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProductGalleryScreen())),
                   backgroundColor: FlokowerTheme.black,
                   foregroundColor: Colors.white,
                   elevation: 4,

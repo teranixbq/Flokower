@@ -18,14 +18,29 @@ class DashboardScreen extends ConsumerWidget {
     final transactions = ref.watch(transactionProvider);
     final user = FirebaseAuth.instance.currentUser;
 
+    /// Ambil URL gambar produk: pakai `productImageUrl` kalau ada,
+    /// fallback ke lookup dari koleksi produk (untuk transaksi lama).
+    String? getProductImageUrl(String? txImageUrl, String productId) {
+      if (txImageUrl != null && txImageUrl.isNotEmpty) return txImageUrl;
+      try {
+        return products.products.firstWhere((p) => p.id == productId).imageUrl;
+      } catch (_) {
+        return null;
+      }
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Row(
           children: [
-            Container(
-              width: 32, height: 32,
-              decoration: BoxDecoration(color: FlokowerTheme.black, borderRadius: BorderRadius.circular(8)),
-              child: const Icon(Icons.local_florist, color: Colors.white, size: 18),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.asset(
+                'assets/images/flokower-logo.png',
+                width: 32,
+                height: 32,
+                fit: BoxFit.cover,
+              ),
             ),
             const SizedBox(width: 10),
             const Text('Flokower'),
@@ -154,11 +169,28 @@ class DashboardScreen extends ConsumerWidget {
                           color: tx.isCompleted ? FlokowerTheme.accentGreenLight : tx.isCancelled ? FlokowerTheme.accentRedLight : FlokowerTheme.accentOrangeLight,
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: Icon(
-                          tx.isCompleted ? Icons.check_rounded : tx.isCancelled ? Icons.close_rounded : Icons.hourglass_empty_rounded,
-                          size: 20,
-                          color: tx.isCompleted ? FlokowerTheme.accentGreen : tx.isCancelled ? FlokowerTheme.accentRed : FlokowerTheme.accentOrange,
-                        ),
+                        child: () {
+                          final imgUrl = getProductImageUrl(tx.productImageUrl, tx.productId);
+                          if (imgUrl != null && imgUrl.isNotEmpty) {
+                            return ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: Image.network(
+                                imgUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => Icon(
+                                  tx.isCompleted ? Icons.check_rounded : tx.isCancelled ? Icons.close_rounded : Icons.hourglass_empty_rounded,
+                                  size: 20,
+                                  color: tx.isCompleted ? FlokowerTheme.accentGreen : tx.isCancelled ? FlokowerTheme.accentRed : FlokowerTheme.accentOrange,
+                                ),
+                              ),
+                            );
+                          }
+                          return Icon(
+                            tx.isCompleted ? Icons.check_rounded : tx.isCancelled ? Icons.close_rounded : Icons.hourglass_empty_rounded,
+                            size: 20,
+                            color: tx.isCompleted ? FlokowerTheme.accentGreen : tx.isCancelled ? FlokowerTheme.accentRed : FlokowerTheme.accentOrange,
+                          );
+                        }(),
                       ),
                       const SizedBox(width: 12),
                       Expanded(

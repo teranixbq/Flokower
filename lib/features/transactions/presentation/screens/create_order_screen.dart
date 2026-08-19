@@ -8,21 +8,32 @@ import '../../../../shared/models/material_model.dart';
 import '../../../inventory/presentation/providers/material_provider.dart';
 import '../../../inventory/presentation/providers/product_provider.dart';
 import '../../presentation/providers/transaction_provider.dart';
+import 'product_gallery_screen.dart';
 
 class CreateOrderScreen extends ConsumerStatefulWidget {
-  const CreateOrderScreen({super.key});
+  final List<Product> selectedProducts;
+
+  const CreateOrderScreen({super.key, required this.selectedProducts});
 
   @override
   ConsumerState<CreateOrderScreen> createState() => _CreateOrderScreenState();
 }
 
 class _CreateOrderScreenState extends ConsumerState<CreateOrderScreen> {
-  Product? _selectedProduct;
+  final Map<String, int> _productQuantities = {};
   final _customerNameController = TextEditingController();
   final _customerPhoneController = TextEditingController();
   final _notesController = TextEditingController();
-  int _quantity = 1;
   bool _isSubmitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize all quantities to 1
+    for (var product in widget.selectedProducts) {
+      _productQuantities[product.id] = 1;
+    }
+  }
 
   @override
   void dispose() {
@@ -36,7 +47,64 @@ class _CreateOrderScreenState extends ConsumerState<CreateOrderScreen> {
     final materials = ref.read(materialProvider).materials;
     final stockMap = <String, int>{};
     for (var m in materials) { stockMap[m.id] = m.availableQuantity; }
-    return product.hasSufficientStock(stockMap);
+    final quantity = _productQuantities[product.id] ?? 1;
+    final adjustedIngredients = product.ingredients.map((ing) {
+      return ing.copyWith(quantityNeeded: ing.quantityNeeded * quantity);
+    }).toList();
+    final adjustedProduct = product.copyWith(ingredients: adjustedIngredients);
+    return adjustedProduct.hasSufficientStock(stockMap);
+  }
+
+  bool _checkIfCanIncrease(Product product) {
+    final materials = ref.read(materialProvider).materials;
+    final stockMap = <String, int>{};
+    for (var m in materials) { stockMap[m.id] = m.availableQuantity; }
+    final currentQuantity = _productQuantities[product.id] ?? 1;
+    final nextQuantity = currentQuantity + 1;
+    final adjustedIngredients = product.ingredients.map((ing) {
+      return ing.copyWith(quantityNeeded: ing.quantityNeeded * nextQuantity);
+    }).toList();
+    final adjustedProduct = product.copyWith(ingredients: adjustedIngredients);
+    return adjustedProduct.hasSufficientStock(stockMap);
+  }
+
+  void _removeProduct(Product product) {
+    setState(() {
+      widget.selectedProducts.remove(product);
+      _productQuantities.remove(product.id);
+    });
+  }
+
+  bool _checkAggregatedStockAvailable() {
+    final materials = ref.read(materialProvider).materials;
+    final stockMap = <String, int>{};
+    for (var m in materials) {
+      stockMap[m.id] = m.availableQuantity;
+    }
+
+    // Aggregate all ingredients from all products with their quantities
+    final Map<String, int> aggregatedNeeds = {};
+    for (final product in widget.selectedProducts) {
+      final quantity = _productQuantities[product.id] ?? 1;
+      for (final ing in product.ingredients) {
+        final needed = ing.quantityNeeded * quantity;
+        aggregatedNeeds[ing.materialId] = (aggregatedNeeds[ing.materialId] ?? 0) + needed;
+      }
+    }
+
+    // Check if aggregated needs can be fulfilled
+    for (final entry in aggregatedNeeds.entries) {
+      final available = stockMap[entry.key] ?? 0;
+      if (available < entry.value) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  bool _hasAnyInsufficientStock() {
+    return !_checkAggregatedStockAvailable();
   }
 
   String _getMaterialName(String id) {
@@ -44,8 +112,13 @@ class _CreateOrderScreenState extends ConsumerState<CreateOrderScreen> {
   }
 
   Future<void> _submitOrder() async {
-    if (_selectedProduct == null) {
+    if (widget.selectedProducts.isEmpty) {
       showToast(context, message: 'Pilih produk terlebih dahulu', type: ToastType.warning);
+      return;
+    }
+
+    if (_hasAnyInsufficientStock()) {
+      showToast(context, message: 'Ada produk dengan stok tidak cukup', type: ToastType.error);
       return;
     }
 
@@ -56,38 +129,49 @@ class _CreateOrderScreenState extends ConsumerState<CreateOrderScreen> {
       final stockMap = <String, int>{};
       for (var m in materials) { stockMap[m.id] = m.availableQuantity; }
 
-      final List<TransactionIngredient> ingredients = [];
-      for (final ing in _selectedProduct!.ingredients) {
-        final needed = ing.quantityNeeded * _quantity;
-        final available = stockMap[ing.materialId] ?? 0;
-        if (available < needed) {
-          throw Exception('Stok ${_getMaterialName(ing.materialId)} tidak cukup! Tersedia: $available, Dibutuhkan: $needed');
+      // Create a transaction for each product
+      for (final product in widget.selectedProducts) {
+        final quantity = _productQuantities[product.id] ?? 1;
+        
+        final List<TransactionIngredient> ingredients = [];
+        for (final ing in product.ingredients) {
+          final needed = ing.quantityNeeded * quantity;
+          final available = stockMap[ing.materialId] ?? 0;
+          if (available < needed) {
+            throw Exception('Stok ${_getMaterialName(ing.materialId)} tidak cukup untuk ${product.name}! Tersedia: $available, Dibutuhkan: $needed');
+          }
+          ingredients.add(TransactionIngredient(materialId: ing.materialId, materialName: _getMaterialName(ing.materialId), quantityNeeded: needed));
         }
-        ingredients.add(TransactionIngredient(materialId: ing.materialId, materialName: _getMaterialName(ing.materialId), quantityNeeded: needed));
+
+        final transaction = TransactionModel(
+          id: '',
+          productId: product.id,
+          productName: product.name,
+          productImageUrl: product.imageUrl,
+          productPriceAtSale: product.price,
+          quantity: quantity,
+          totalAmount: product.price * quantity,
+          status: 'in_progress',
+          customerName: _customerNameController.text.trim().isEmpty ? null : _customerNameController.text.trim(),
+          customerPhone: _customerPhoneController.text.trim().isEmpty ? null : _customerPhoneController.text.trim(),
+          notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+          materialsUsed: ingredients,
+          orderDate: DateTime.now(),
+          startedAt: DateTime.now(),
+          createdBy: 'user',
+        );
+
+        await ref.read(transactionProvider.notifier).createTransaction(transaction);
+        
+        // Update stock map for next product
+        for (final ing in ingredients) {
+          stockMap[ing.materialId] = (stockMap[ing.materialId] ?? 0) - ing.quantityNeeded;
+        }
       }
-
-      final transaction = TransactionModel(
-        id: '',
-        productId: _selectedProduct!.id,
-        productName: _selectedProduct!.name,
-        productPriceAtSale: _selectedProduct!.price,
-        quantity: _quantity,
-        totalAmount: _selectedProduct!.price * _quantity,
-        status: 'in_progress',
-        customerName: _customerNameController.text.trim().isEmpty ? null : _customerNameController.text.trim(),
-        customerPhone: _customerPhoneController.text.trim().isEmpty ? null : _customerPhoneController.text.trim(),
-        notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
-        materialsUsed: ingredients,
-        orderDate: DateTime.now(),
-        startedAt: DateTime.now(),
-        createdBy: 'user',
-      );
-
-      await ref.read(transactionProvider.notifier).createTransaction(transaction);
 
       if (mounted) {
         Navigator.pop(context, true);
-        showToast(context, message: 'Order berhasil dibuat! Status: Dalam Proses', type: ToastType.success);
+        showToast(context, message: '${widget.selectedProducts.length} order berhasil dibuat! Status: Dalam Proses', type: ToastType.success);
       }
     } catch (e) {
       if (mounted) showToast(context, message: '$e', type: ToastType.error);
@@ -98,151 +182,205 @@ class _CreateOrderScreenState extends ConsumerState<CreateOrderScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final products = ref.watch(productProvider).products.where((p) => p.isActive).toList();
-
     return Scaffold(
-      appBar: AppBar(title: const Text('Buat Order Baru')),
+      appBar: AppBar(
+        title: const Text('Buat Order Baru'),
+        actions: [
+          TextButton.icon(
+            icon: const Icon(Icons.edit, size: 18),
+            label: const Text('Ubah Produk'),
+            onPressed: () async {
+              final result = await Navigator.push<List<Product>>(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ProductGalleryScreen(
+                    initialSelectedProducts: widget.selectedProducts,
+                  ),
+                ),
+              );
+              
+              if (result != null && mounted) {
+                setState(() {
+                  widget.selectedProducts.clear();
+                  widget.selectedProducts.addAll(result);
+                  
+                  // Reset quantities for products that are still selected
+                  _productQuantities.removeWhere((productId, _) => 
+                    !result.any((p) => p.id == productId));
+                  
+                  // Initialize quantities for new products
+                  for (var product in result) {
+                    if (!_productQuantities.containsKey(product.id)) {
+                      _productQuantities[product.id] = 1;
+                    }
+                  }
+                });
+              }
+            },
+          ),
+        ],
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Product selector
-            const Text('Pilih Produk', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: FlokowerTheme.black)),
+            // Selected products with quantity controls
+            const Text('Produk Dipilih', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: FlokowerTheme.black)),
             const SizedBox(height: 10),
-            Container(
-              decoration: BoxDecoration(
-                color: FlokowerTheme.white,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFEEEEEE)),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<Product>(
-                  value: _selectedProduct,
-                  isExpanded: true,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  borderRadius: BorderRadius.circular(14),
-                  hint: Text('-- Pilih Produk --', style: TextStyle(color: FlokowerTheme.mediumGray)),
-                  items: products.map((Product p) {
-                    final hasStock = _checkStockAvailable(p);
-                    return DropdownMenuItem<Product>(
-                      value: p,
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 32, height: 32,
-                            decoration: BoxDecoration(
-                              color: hasStock ? FlokowerTheme.accentGreenLight : FlokowerTheme.accentRedLight,
-                              borderRadius: BorderRadius.circular(8),
-                              image: p.imageUrl != null && p.imageUrl!.isNotEmpty
-                                  ? DecorationImage(image: NetworkImage(p.imageUrl!), fit: BoxFit.cover)
-                                  : null,
-                            ),
-                            child: p.imageUrl == null || p.imageUrl!.isEmpty
-                                ? Icon(hasStock ? Icons.check_rounded : Icons.close_rounded, size: 16, color: hasStock ? FlokowerTheme.accentGreen : FlokowerTheme.accentRed)
-                                : null,
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(child: Text(p.name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14))),
-                          Text('Rp ${_fmt(p.price)}', style: TextStyle(fontSize: 12, color: FlokowerTheme.mediumGray)),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                  onChanged: (Product? v) => setState(() => _selectedProduct = v),
+            ...widget.selectedProducts.map((product) {
+              final quantity = _productQuantities[product.id] ?? 1;
+              final hasStock = _checkStockAvailable(product);
+              final canIncrease = _checkIfCanIncrease(product);
+              
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: FlokowerTheme.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: hasStock ? const Color(0xFFEEEEEE) : FlokowerTheme.accentRed.withOpacity(0.3)),
                 ),
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Quantity
-            const Text('Jumlah', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: FlokowerTheme.black)),
-            const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(color: FlokowerTheme.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFEEEEEE))),
-              child: Row(
-                children: [
-                  _QtyButton(icon: Icons.remove_rounded, onTap: _quantity > 1 ? () => setState(() => _quantity--) : null),
-                  const Spacer(),
-                  Text('$_quantity', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: FlokowerTheme.black)),
-                  const Spacer(),
-                  _QtyButton(icon: Icons.add_rounded, onTap: () => setState(() => _quantity++)),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Ingredients preview
-            if (_selectedProduct != null) ...[
-              const Text('Bahan yang Dibutuhkan', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: FlokowerTheme.black)),
-              const SizedBox(height: 10),
-              ..._selectedProduct!.ingredients.map((ing) {
-                final name = _getMaterialName(ing.materialId);
-                final needed = ing.quantityNeeded * _quantity;
-                try {
-                  final mat = ref.read(materialProvider.notifier).materialById(ing.materialId);
-                  final available = mat.availableQuantity;
-                  final isEnough = available >= needed;
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: FlokowerTheme.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: isEnough ? const Color(0xFFEEEEEE) : FlokowerTheme.accentRed.withOpacity(0.3)),
-                    ),
-                    child: Row(
+                child: Column(
+                  children: [
+                    // Product info
+                    Row(
                       children: [
+                        // Product image
                         Container(
-                          width: 36, height: 36,
+                          width: 50,
+                          height: 50,
                           decoration: BoxDecoration(
-                            color: isEnough ? FlokowerTheme.accentGreenLight : FlokowerTheme.accentRedLight,
+                            color: FlokowerTheme.offWhite,
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Icon(isEnough ? Icons.check_rounded : Icons.close_rounded, size: 18, color: isEnough ? FlokowerTheme.accentGreen : FlokowerTheme.accentRed),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: product.imageUrl != null && product.imageUrl!.isNotEmpty
+                                ? Image.network(product.imageUrl!, fit: BoxFit.cover)
+                                : Icon(Icons.image, color: FlokowerTheme.lightGray),
+                          ),
                         ),
                         const SizedBox(width: 12),
+                        // Product name
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: FlokowerTheme.black)),
-                              Text('Tersedia: $available ${mat.unit}', style: TextStyle(fontSize: 12, color: FlokowerTheme.mediumGray)),
+                              Text(product.name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                              if (!hasStock)
+                                Text('Stok tidak cukup', style: TextStyle(fontSize: 12, color: FlokowerTheme.accentRed)),
                             ],
                           ),
                         ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: isEnough ? FlokowerTheme.accentGreenLight : FlokowerTheme.accentRedLight,
-                            borderRadius: BorderRadius.circular(6),
+                        // Delete button - only show when there's more than 1 product
+                        if (widget.selectedProducts.length > 1)
+                          IconButton(
+                            icon: const Icon(Icons.delete_outline, color: FlokowerTheme.accentRed),
+                            onPressed: () => _removeProduct(product),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
                           ),
-                          child: Text('Butuh: $needed', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isEnough ? FlokowerTheme.accentGreen : FlokowerTheme.accentRed)),
-                        ),
                       ],
                     ),
-                  );
-                } catch (e) {
-                  return Container(margin: const EdgeInsets.only(bottom: 8), child: Text(name));
-                }
-              }),
-              const SizedBox(height: 12),
-
-              // Total
-              Container(
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(color: FlokowerTheme.black, borderRadius: BorderRadius.circular(14)),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Total', style: TextStyle(color: Colors.white54, fontSize: 14, fontWeight: FontWeight.w500)),
-                    Text('Rp ${_fmt(_selectedProduct!.price * _quantity)}', style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800, letterSpacing: -0.5)),
+                    const SizedBox(height: 12),
+                    // Quantity control
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: FlokowerTheme.offWhite,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        children: [
+                          _QtyButton(
+                            icon: Icons.remove_rounded,
+                            onTap: quantity > 1 ? () => setState(() => _productQuantities[product.id] = quantity - 1) : null,
+                          ),
+                          const Spacer(),
+                          Text('$quantity', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: FlokowerTheme.black)),
+                          const Spacer(),
+                          _QtyButton(
+                            icon: Icons.add_rounded,
+                            onTap: canIncrease ? () => setState(() => _productQuantities[product.id] = quantity + 1) : null,
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
+              );
+            }),
+            
+            const SizedBox(height: 8),
+
+            // Ingredients preview for all products
+            const Text('Bahan yang Dibutuhkan', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: FlokowerTheme.black)),
+            const SizedBox(height: 10),
+            ..._getAggregatedIngredients().map((ing) {
+              final name = _getMaterialName(ing.materialId);
+              try {
+                final mat = ref.read(materialProvider.notifier).materialById(ing.materialId);
+                final available = mat.availableQuantity;
+                final isEnough = available >= ing.quantityNeeded;
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: FlokowerTheme.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: isEnough ? const Color(0xFFEEEEEE) : FlokowerTheme.accentRed.withOpacity(0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 36, height: 36,
+                        decoration: BoxDecoration(
+                          color: isEnough ? FlokowerTheme.accentGreenLight : FlokowerTheme.accentRedLight,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(isEnough ? Icons.check_rounded : Icons.close_rounded, size: 18, color: isEnough ? FlokowerTheme.accentGreen : FlokowerTheme.accentRed),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: FlokowerTheme.black)),
+                            Text('Tersedia: $available ${mat.unit}', style: TextStyle(fontSize: 12, color: FlokowerTheme.mediumGray)),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: isEnough ? FlokowerTheme.accentGreenLight : FlokowerTheme.accentRedLight,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text('Butuh: ${ing.quantityNeeded}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isEnough ? FlokowerTheme.accentGreen : FlokowerTheme.accentRed)),
+                      ),
+                    ],
+                  ),
+                );
+              } catch (e) {
+                return Container(margin: const EdgeInsets.only(bottom: 8), child: Text(name));
+              }
+            }),
+            const SizedBox(height: 12),
+
+            // Total
+            Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(color: FlokowerTheme.black, borderRadius: BorderRadius.circular(14)),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Total', style: TextStyle(color: Colors.white54, fontSize: 14, fontWeight: FontWeight.w500)),
+                  Text('Rp ${_fmt(_calculateTotal())}', style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800, letterSpacing: -0.5)),
+                ],
               ),
-              const SizedBox(height: 20),
-            ],
+            ),
+            const SizedBox(height: 20),
 
             // Customer info
             const Text('Info Pelanggan (Opsional)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: FlokowerTheme.black)),
@@ -268,10 +406,12 @@ class _CreateOrderScreenState extends ConsumerState<CreateOrderScreen> {
             SizedBox(
               height: 52,
               child: ElevatedButton(
-                onPressed: _isSubmitting ? null : _submitOrder,
+                onPressed: _isSubmitting || _hasAnyInsufficientStock() || widget.selectedProducts.isEmpty ? null : _submitOrder,
                 child: _isSubmitting
                     ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
-                    : const Text('Buat Order', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                    : widget.selectedProducts.isEmpty
+                        ? const Text('Pilih Produk', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700))
+                        : Text('Buat ${widget.selectedProducts.length} Order', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
               ),
             ),
             const SizedBox(height: 24),
@@ -279,6 +419,31 @@ class _CreateOrderScreenState extends ConsumerState<CreateOrderScreen> {
         ),
       ),
     );
+  }
+
+  List<TransactionIngredient> _getAggregatedIngredients() {
+    final Map<String, int> aggregated = {};
+    final Map<String, String> names = {};
+    
+    for (final product in widget.selectedProducts) {
+      final quantity = _productQuantities[product.id] ?? 1;
+      for (final ing in product.ingredients) {
+        final needed = ing.quantityNeeded * quantity;
+        aggregated[ing.materialId] = (aggregated[ing.materialId] ?? 0) + needed;
+        names[ing.materialId] = _getMaterialName(ing.materialId);
+      }
+    }
+    
+    return aggregated.entries.map((e) => TransactionIngredient(materialId: e.key, materialName: names[e.key] ?? '', quantityNeeded: e.value)).toList();
+  }
+
+  double _calculateTotal() {
+    double total = 0;
+    for (final product in widget.selectedProducts) {
+      final quantity = _productQuantities[product.id] ?? 1;
+      total += product.price * quantity;
+    }
+    return total;
   }
 
   String _fmt(double n) {
