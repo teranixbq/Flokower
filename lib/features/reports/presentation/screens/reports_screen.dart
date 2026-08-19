@@ -34,9 +34,14 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
   @override
   Widget build(BuildContext context) {
     final txState = ref.watch(transactionProvider);
+    
+    // Stats dihitung dari SEMUA transaksi (tidak terpengaruh filter)
+    final allCompleted = txState.transactions.where((t) => t.isCompleted).toList();
+    final allCancelled = txState.transactions.where((t) => t.isCancelled).toList();
+    final totalRevenue = allCompleted.fold(0.0, (sum, t) => sum + t.totalAmount);
+    
+    // Filter hanya mempengaruhi list di bawah
     final filtered = _filter == 'all' ? txState.transactions : txState.transactions.where((t) => t.status == _filter).toList();
-    final completed = filtered.where((t) => t.isCompleted).toList();
-    final totalRevenue = completed.fold(0.0, (sum, t) => sum + t.totalAmount);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Laporan Penjualan'), actions: const [SettingsButton()]),
@@ -55,9 +60,9 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                   children: [
                     Expanded(child: _SummaryTile(title: 'Pendapatan', value: CurrencyInputFormatter.display(totalRevenue), color: FlokowerTheme.accentGreen)),
                     const SizedBox(width: 10),
-                    Expanded(child: _SummaryTile(title: 'Selesai', value: '${completed.length}', color: FlokowerTheme.accentBlue)),
+                    Expanded(child: _SummaryTile(title: 'Selesai', value: '${allCompleted.length}', color: FlokowerTheme.accentBlue)),
                     const SizedBox(width: 10),
-                    Expanded(child: _SummaryTile(title: 'Batal', value: '${filtered.where((t) => t.isCancelled).length}', color: FlokowerTheme.accentRed)),
+                    Expanded(child: _SummaryTile(title: 'Batal', value: '${allCancelled.length}', color: FlokowerTheme.accentRed)),
                   ],
                 ),
                 const SizedBox(height: 16),
