@@ -62,6 +62,81 @@ If you encounter shader compilation errors on Chrome, use HTML renderer:
 flutter run -d chrome --web-renderer html
 ```
 
+## 📱 Build for Production
+
+### Build APK (Android)
+
+```bash
+# Debug build (for testing)
+flutter build apk --debug
+# Output: build/app/outputs/flutter-apk/app-debug.apk
+
+# Release build (for distribution)
+flutter build apk --release
+# Output: build/app/outputs/flutter-apk/app-release.apk
+
+# App Bundle (for Google Play Store)
+flutter build appbundle --release
+# Output: build/app/outputs/bundle/release/app-release.aab
+```
+
+**⚠️ Important:** Release builds require signing configuration. See [Deployment Guide](#deployment) for keystore setup.
+
+### Build Web
+
+```bash
+flutter build web --release
+# Output: build/web/ (deploy to any static hosting)
+```
+
+## 🔒 Deployment
+
+### Android APK Signing
+
+1. **Generate keystore** (keep this safe!):
+```bash
+keytool -genkey -v -keystore ~/flokower-release-key.jks \
+  -keyalg RSA -keysize 2048 -validity 10000 -alias flokower
+```
+
+2. **Create `android/key.properties`**:
+```properties
+storePassword=YOUR_STORE_PASSWORD
+keyPassword=YOUR_KEY_PASSWORD
+keyAlias=flokower
+storeFile=/path/to/flokower-release-key.jks
+```
+
+3. **Build signed APK**:
+```bash
+flutter build apk --release
+```
+
+### Firebase Production Setup
+
+Firebase doesn't require manual "production mode" switching. However, ensure:
+
+1. **Firestore Security Rules** are properly configured:
+```bash
+# Deploy production rules
+firebase deploy --only firestore:rules
+```
+
+**Recommended production rules** (restrict to authenticated users):
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
+```
+
+2. **Firebase Authentication** is enabled and configured
+3. **Cloudflare R2** credentials are properly set in `.env`
+
 ## 📁 Project Structure
 
 ```

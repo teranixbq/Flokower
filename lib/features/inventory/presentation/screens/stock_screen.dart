@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart' hide Material;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/theme/flokower_theme.dart';
-import '../../../../shared/widgets/toast.dart';
-import '../../../../shared/widgets/settings_button.dart';
 import '../../../../shared/models/material_model.dart';
 import '../../../../shared/models/product_model.dart';
 import '../providers/material_provider.dart';
@@ -10,6 +8,7 @@ import '../providers/product_provider.dart';
 import '../widgets/material_form.dart';
 import '../widgets/product_form_dialog.dart';
 import '../widgets/stock_adjust_dialog.dart';
+import '../../../../shared/widgets/settings_button.dart';
 
 class StockScreen extends ConsumerStatefulWidget {
   const StockScreen({super.key});
@@ -18,13 +17,17 @@ class StockScreen extends ConsumerStatefulWidget {
   ConsumerState<StockScreen> createState() => _StockScreenState();
 }
 
-class _StockScreenState extends ConsumerState<StockScreen> with SingleTickerProviderStateMixin {
+class _StockScreenState extends ConsumerState<StockScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging && mounted) setState(() {});
+    });
   }
 
   @override
@@ -36,20 +39,52 @@ class _StockScreenState extends ConsumerState<StockScreen> with SingleTickerProv
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: FlokowerTheme.offWhite,
       appBar: AppBar(
         title: const Text('Stok'),
         actions: const [SettingsButton()],
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(text: 'Bahan Baku'),
-            Tab(text: 'Produk'),
-          ],
-        ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: const [_MaterialsTab(), _ProductsTab()],
+      body: Column(
+        children: [
+          // ─── White unified area (header matches tab bg) ───
+          Container(
+            color: FlokowerTheme.white,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+              child: Container(
+                padding: const EdgeInsets.all(3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEBEBEB),
+                  borderRadius: BorderRadius.circular(50),
+                ),
+                child: Row(
+                  children: [
+                    _TabSegment(
+                      label: 'Bahan Baku',
+                      isActive: _tabController.index == 0,
+                      onTap: () => _tabController.animateTo(0),
+                    ),
+                    _TabSegment(
+                      label: 'Produk',
+                      isActive: _tabController.index == 1,
+                      onTap: () => _tabController.animateTo(1),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          // ─── Swipeable tab content (offWhite bg) ───
+          Expanded(
+            child: Container(
+              color: FlokowerTheme.offWhite,
+              child: TabBarView(
+                controller: _tabController,
+                children: const [_MaterialsTab(), _ProductsTab()],
+              ),
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -75,6 +110,50 @@ class _StockScreenState extends ConsumerState<StockScreen> with SingleTickerProv
   }
 }
 
+// ─────────────────────────────────────────────────────────
+// Pill-style tab segment
+// ─────────────────────────────────────────────────────────
+class _TabSegment extends StatelessWidget {
+  final String label;
+  final bool isActive;
+  final VoidCallback onTap;
+
+  const _TabSegment({
+    required this.label,
+    required this.isActive,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+          decoration: BoxDecoration(
+            color: isActive ? FlokowerTheme.accentTeal : Colors.transparent,
+            borderRadius: BorderRadius.circular(50),
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: isActive ? Colors.white : FlokowerTheme.darkGray,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+// BAHAN BAKU TAB — simple list cards
+// ─────────────────────────────────────────────────────────
 class _MaterialsTab extends ConsumerWidget {
   const _MaterialsTab();
 
@@ -87,24 +166,28 @@ class _MaterialsTab extends ConsumerWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.inventory_2_outlined, size: 56, color: FlokowerTheme.lightGray),
+            Icon(Icons.inventory_2_outlined,
+                size: 56, color: FlokowerTheme.lightGray),
             const SizedBox(height: 16),
-            const Text('Belum ada bahan baku', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: FlokowerTheme.darkGray)),
+            const Text('Belum ada bahan baku',
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: FlokowerTheme.darkGray)),
             const SizedBox(height: 6),
-            Text('Tekan + untuk menambahkan', style: TextStyle(fontSize: 13, color: FlokowerTheme.mediumGray)),
+            Text('Tekan + untuk menambahkan',
+                style: TextStyle(fontSize: 13, color: FlokowerTheme.mediumGray)),
           ],
         ),
       );
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
       itemCount: state.materials.length,
       itemBuilder: (context, index) {
         final material = state.materials[index];
         return GestureDetector(
-          // Klik bahan → dialog ubah stok cepat (jumlah saat ini + stepper).
-          // Dari sana bisa lanjut ke form edit detail.
           onTap: () async {
             final result = await showDialog<String>(
               context: context,
@@ -112,9 +195,12 @@ class _MaterialsTab extends ConsumerWidget {
             );
             if (result == 'edit' && context.mounted) {
               try {
-                final latest = ref.read(materialProvider.notifier).materialById(material.id);
+                final latest =
+                    ref.read(materialProvider.notifier).materialById(material.id);
                 if (context.mounted) {
-                  showDialog(context: context, builder: (ctx) => MaterialForm(material: latest));
+                  showDialog(
+                      context: context,
+                      builder: (ctx) => MaterialForm(material: latest));
                 }
               } catch (_) {
                 // bahan sudah dihapus
@@ -122,56 +208,66 @@ class _MaterialsTab extends ConsumerWidget {
             }
           },
           child: Container(
-            margin: const EdgeInsets.only(bottom: 10),
-            padding: const EdgeInsets.all(16),
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
             decoration: BoxDecoration(
               color: FlokowerTheme.white,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: material.isLowStock ? FlokowerTheme.accentOrange.withOpacity(0.4) : const Color(0xFFEEEEEE)),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFEDEDED)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             child: Row(
               children: [
+                // ─── Circular icon ───
                 Container(
-                  width: 44, height: 44,
+                  width: 42,
+                  height: 42,
                   decoration: BoxDecoration(
-                    color: material.isLowStock ? FlokowerTheme.accentOrangeLight : FlokowerTheme.accentBlueLight,
-                    borderRadius: BorderRadius.circular(12),
+                    color: const Color(0xFFE3F2FD),
+                    shape: BoxShape.circle,
                   ),
                   child: Icon(
-                    material.unit == 'lembar' ? Icons.layers_outlined : Icons.eco_outlined,
-                    color: material.isLowStock ? FlokowerTheme.accentOrange : FlokowerTheme.accentBlue,
-                    size: 22,
+                    material.unit == 'lembar'
+                        ? Icons.layers_outlined
+                        : Icons.eco_outlined,
+                    color: FlokowerTheme.accentBlue,
+                    size: 20,
                   ),
                 ),
                 const SizedBox(width: 14),
+                // ─── Name + stock info ───
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(material.name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: FlokowerTheme.black)),
-                      const SizedBox(height: 2),
-                      Row(
-                        children: [
-                          Text('${material.currentQuantity} ${material.unit}', style: TextStyle(fontSize: 13, color: FlokowerTheme.mediumGray)),
-                          if (material.reservedQuantity > 0) ...[
-                            Text(' • reserved: ${material.reservedQuantity}', style: const TextStyle(fontSize: 11, color: FlokowerTheme.accentOrange)),
-                          ],
-                        ],
+                      Text(
+                        material.name,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: FlokowerTheme.black,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        material.reservedQuantity > 0
+                            ? '${material.currentQuantity} ${material.unit} \u2022 reserved: ${material.reservedQuantity}'
+                            : '${material.currentQuantity} ${material.unit}',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: FlokowerTheme.mediumGray,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ],
                   ),
                 ),
-                if (material.isLowStock)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: FlokowerTheme.accentOrangeLight,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Text('Menipis', style: TextStyle(fontSize: 11, color: FlokowerTheme.accentOrange, fontWeight: FontWeight.w600)),
-                  ),
-                const SizedBox(width: 4),
-                Icon(Icons.chevron_right_rounded, color: FlokowerTheme.lightGray, size: 20),
               ],
             ),
           ),
@@ -181,6 +277,9 @@ class _MaterialsTab extends ConsumerWidget {
   }
 }
 
+// ─────────────────────────────────────────────────────────
+// PRODUK TAB — compact 2-column grid
+// ─────────────────────────────────────────────────────────
 class _ProductsTab extends ConsumerWidget {
   const _ProductsTab();
 
@@ -193,102 +292,113 @@ class _ProductsTab extends ConsumerWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.local_florist_outlined, size: 56, color: FlokowerTheme.lightGray),
+            Icon(Icons.local_florist_outlined,
+                size: 56, color: FlokowerTheme.lightGray),
             const SizedBox(height: 16),
-            const Text('Belum ada produk', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: FlokowerTheme.darkGray)),
+            const Text('Belum ada produk',
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: FlokowerTheme.darkGray)),
             const SizedBox(height: 6),
-            Text('Tekan + untuk menambahkan', style: TextStyle(fontSize: 13, color: FlokowerTheme.mediumGray)),
+            Text('Tekan + untuk menambahkan',
+                style: TextStyle(fontSize: 13, color: FlokowerTheme.mediumGray)),
           ],
         ),
       );
     }
 
-    // Grid rata (bukan bento): semua kartu ukuran sama,
-    // gambar menampilkan hasil upload foto produk.
     return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 210,
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
         mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        childAspectRatio: 0.72,
+        crossAxisSpacing: 10,
+        childAspectRatio: 0.78,
       ),
       itemCount: state.products.length,
       itemBuilder: (context, index) {
         final product = state.products[index];
         final hasImage = product.imageUrl != null && product.imageUrl!.isNotEmpty;
         return GestureDetector(
-          onTap: () => showDialog(context: context, builder: (ctx) => ProductFormDialog(product: product)),
+          onTap: () => showDialog(
+              context: context,
+              builder: (ctx) => ProductFormDialog(product: product)),
           child: Container(
             decoration: BoxDecoration(
               color: FlokowerTheme.white,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: product.isActive ? const Color(0xFFEEEEEE) : FlokowerTheme.accentRed.withOpacity(0.3)),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFEDEDED)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             clipBehavior: Clip.antiAlias,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // ─── Foto produk (hasil upload) ───
+                // ─── Foto produk ───
                 Expanded(
-                  flex: 5,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      if (hasImage)
-                        Image.network(
-                          product.imageUrl!,
-                          fit: BoxFit.cover,
-                          loadingBuilder: (context, child, progress) {
-                            if (progress == null) return child;
-                            return Container(
-                              color: FlokowerTheme.offWhite,
-                              child: const Center(
-                                child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2)),
-                              ),
-                            );
-                          },
-                          errorBuilder: (context, error, stack) => const _ProductImagePlaceholder(),
-                        )
-                      else
-                        const _ProductImagePlaceholder(),
-                      if (!product.isActive)
-                        Positioned(
-                          top: 8,
-                          left: 8,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: FlokowerTheme.accentRed,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: const Text('Nonaktif', style: TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.w600)),
-                          ),
-                        ),
-                    ],
+                  child: ClipRRect(
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(16)),
+                    child: hasImage
+                        ? Image.network(
+                            product.imageUrl!,
+                            fit: BoxFit.cover,
+                            loadingBuilder: (context, child, progress) {
+                              if (progress == null) return child;
+                              return Container(
+                                color: FlokowerTheme.offWhite,
+                                child: const Center(
+                                  child: SizedBox(
+                                    width: 22,
+                                    height: 22,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2),
+                                  ),
+                                ),
+                              );
+                            },
+                            errorBuilder: (context, error, stack) =>
+                                const _ProductImagePlaceholder(),
+                          )
+                        : const _ProductImagePlaceholder(),
                   ),
                 ),
-                // ─── Info produk ───
-                Expanded(
-                  flex: 3,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          product.name,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: FlokowerTheme.black, height: 1.2),
+                // ─── Info: nama + harga (compact, no gap) ───
+                Padding(
+                  padding:
+                      const EdgeInsets.fromLTRB(10, 6, 10, 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        product.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: FlokowerTheme.black,
+                          height: 1.25,
                         ),
-                        const Spacer(),
-                        Text(
-                          'Rp ${_fmt(product.price)}',
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: FlokowerTheme.darkGray),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Rp ${_fmt(product.price)}',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: FlokowerTheme.accentTeal,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -301,7 +411,10 @@ class _ProductsTab extends ConsumerWidget {
 
   String _fmt(double n) {
     if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}jt';
-    return n.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.');
+    return n
+        .toStringAsFixed(0)
+        .replaceAllMapped(
+            RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.');
   }
 }
 
@@ -313,7 +426,8 @@ class _ProductImagePlaceholder extends StatelessWidget {
     return Container(
       color: FlokowerTheme.offWhite,
       child: const Center(
-        child: Icon(Icons.local_florist_rounded, size: 32, color: FlokowerTheme.lightGray),
+        child:
+            Icon(Icons.local_florist_rounded, size: 32, color: FlokowerTheme.lightGray),
       ),
     );
   }

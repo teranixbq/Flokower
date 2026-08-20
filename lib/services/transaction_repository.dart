@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../shared/models/transaction_model.dart';
-import '../shared/models/material_model.dart';
 
 class TransactionRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -104,10 +103,8 @@ class TransactionRepository {
         
         var matData = materialDoc.data() as Map<String, dynamic>;
         int currentQty = matData['currentQuantity'] ?? 0;
-        int reservedQty = matData['reservedQuantity'] ?? 0;
         int qtyNeeded = ingredient['quantityNeeded'] ?? 0;
         
-        int available = currentQty - reservedQty + qtyNeeded;
         if (currentQty < qtyNeeded) {
           throw Exception(
             'Stok ${ingredient['materialName']} tidak cukup saat penyelesaian!'

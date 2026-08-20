@@ -4,7 +4,6 @@ import '../shared/models/material_model.dart';
 import 'material_repository.dart';
 
 class ProductRepository {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final MaterialRepository _materialRepo = MaterialRepository();
   
   final CollectionReference _collection = FirebaseFirestore.instance.collection('products');
