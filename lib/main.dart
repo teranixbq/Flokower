@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'firebase_options.dart';
 import 'shared/theme/flokower_theme.dart';
@@ -16,13 +17,18 @@ import 'features/reports/presentation/screens/reports_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Load .env file BEFORE Firebase init
+  // Always load .env (needed for R2 credentials etc.)
   await dotenv.load(fileName: ".env");
 
-  // Now Firebase can read env values
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  if (kIsWeb) {
+    // Web: init Firebase with options from .env
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } else {
+    // Android/iOS: Firebase reads from google-services.json / GoogleService-Info.plist
+    await Firebase.initializeApp();
+  }
 
   runApp(const ProviderScope(child: FlokowerApp()));
 }
