@@ -88,12 +88,12 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
           // ─── Transaction List ───
           Expanded(
             child: filtered.isEmpty
-                ? Center(
+                ? const Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(Icons.receipt_long_rounded, size: 48, color: FlokowerTheme.lightGray),
-                        const SizedBox(height: 12),
+                        SizedBox(height: 12),
                         Text('Belum ada transaksi', style: TextStyle(fontSize: 14, color: FlokowerTheme.mediumGray)),
                       ],
                     ),
@@ -151,9 +151,9 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                                 children: [
                                   Text(tx.productName, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: FlokowerTheme.black)),
                                   const SizedBox(height: 2),
-                                  Text('$dateStr • Qty: ${tx.quantity}', style: TextStyle(fontSize: 11, color: FlokowerTheme.mediumGray)),
+                                  Text('$dateStr • Qty: ${tx.quantity}', style: const TextStyle(fontSize: 11, color: FlokowerTheme.mediumGray)),
                                   if (tx.customerName != null)
-                                    Text('👤 ${tx.customerName}', style: TextStyle(fontSize: 11, color: FlokowerTheme.mediumGray)),
+                                    Text('👤 ${tx.customerName}', style: const TextStyle(fontSize: 11, color: FlokowerTheme.mediumGray)),
                                 ],
                               ),
                             ),
@@ -206,9 +206,9 @@ class _SummaryTile extends StatelessWidget {
         children: [
           Container(width: 8, height: 8, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(4))),
           const SizedBox(height: 8),
-          Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: FlokowerTheme.black, letterSpacing: -0.3)),
+          Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: FlokowerTheme.black, letterSpacing: -0.3)),
           const SizedBox(height: 2),
-          Text(title, style: TextStyle(fontSize: 11, color: FlokowerTheme.mediumGray)),
+          Text(title, style: const TextStyle(fontSize: 11, color: FlokowerTheme.mediumGray)),
         ],
       ),
     );

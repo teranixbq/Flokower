@@ -3,8 +3,8 @@ import '../shared/models/transaction_model.dart';
 
 class TransactionRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  CollectionReference _collection = FirebaseFirestore.instance.collection('transactions');
-  CollectionReference _materials = FirebaseFirestore.instance.collection('materials');
+  final CollectionReference _collection = FirebaseFirestore.instance.collection('transactions');
+  final CollectionReference _materials = FirebaseFirestore.instance.collection('materials');
 
   Stream<List<TransactionModel>> getTransactions() {
     return _collection

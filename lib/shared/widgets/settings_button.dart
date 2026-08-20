@@ -65,7 +65,7 @@ class SettingsButton extends StatelessWidget {
                       ),
                       Text(
                         user?.email ?? '',
-                        style: TextStyle(fontSize: 11, color: FlokowerTheme.mediumGray),
+                        style: const TextStyle(fontSize: 11, color: FlokowerTheme.mediumGray),
                       ),
                     ],
                   ),

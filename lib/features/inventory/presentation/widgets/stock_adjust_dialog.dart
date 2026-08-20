@@ -130,7 +130,7 @@ class _StockAdjustDialogState extends ConsumerState<StockAdjustDialog> {
                         children: [
                           Text(m.name, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: FlokowerTheme.black)),
                           const SizedBox(height: 2),
-                          Text('Stok: ${m.currentQuantity} ${m.unit}', style: TextStyle(fontSize: 12, color: FlokowerTheme.mediumGray)),
+                          Text('Stok: ${m.currentQuantity} ${m.unit}', style: const TextStyle(fontSize: 12, color: FlokowerTheme.mediumGray)),
                         ],
                       ),
                     ),
@@ -208,7 +208,7 @@ class _StockAdjustDialogState extends ConsumerState<StockAdjustDialog> {
                               ),
                             ),
                           ),
-                          Text(m.unit, style: TextStyle(fontSize: 12, color: FlokowerTheme.mediumGray)),
+                          Text(m.unit, style: const TextStyle(fontSize: 12, color: FlokowerTheme.mediumGray)),
                           const SizedBox(width: 8),
                           _StepButton(icon: Icons.add_rounded, enabled: true, onTap: () => _step(1)),
                         ],
@@ -235,7 +235,7 @@ class _StockAdjustDialogState extends ConsumerState<StockAdjustDialog> {
                         ),
                         if (delta < 0) ...[
                           const SizedBox(width: 6),
-                          Text('(mengurangi stok)', style: TextStyle(fontSize: 11, color: FlokowerTheme.mediumGray)),
+                          const Text('(mengurangi stok)', style: TextStyle(fontSize: 11, color: FlokowerTheme.mediumGray)),
                         ],
                       ],
                     ),
@@ -243,7 +243,7 @@ class _StockAdjustDialogState extends ConsumerState<StockAdjustDialog> {
                       const SizedBox(height: 4),
                       Text(
                         'Stok tidak bisa kurang dari reserved (${m.reservedQuantity} ${m.unit})',
-                        style: TextStyle(fontSize: 11, color: FlokowerTheme.lightGray),
+                        style: const TextStyle(fontSize: 11, color: FlokowerTheme.lightGray),
                       ),
                     ],
                   ],
@@ -295,7 +295,7 @@ class _StepButton extends StatelessWidget {
       child: Container(
         width: 38, height: 38,
         decoration: BoxDecoration(
-          color: enabled ? FlokowerTheme.offWhite : FlokowerTheme.offWhite.withOpacity(0.4),
+          color: enabled ? FlokowerTheme.offWhite : FlokowerTheme.offWhite.withValues(alpha: 0.4),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: enabled ? FlokowerTheme.silver : Colors.transparent),
         ),

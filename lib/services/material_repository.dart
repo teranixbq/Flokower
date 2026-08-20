@@ -3,7 +3,7 @@ import '../shared/models/material_model.dart';
 
 class MaterialRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  CollectionReference _collection = FirebaseFirestore.instance.collection('materials');
+  final CollectionReference _collection = FirebaseFirestore.instance.collection('materials');
 
   // Get all materials
   Stream<List<Material>> getMaterials() {
@@ -26,7 +26,7 @@ class MaterialRepository {
   Stream<List<Material>> searchMaterials(String query) {
     return _collection
         .where('name', isGreaterThanOrEqualTo: query)
-        .where('name', isLessThan: query + '\uf8ff')
+        .where('name', isLessThan: '$query\uf8ff')
         .orderBy('name')
         .snapshots()
         .map((snapshot) => snapshot.docs.map((doc) => Material.fromFirestore(doc)).toList());

@@ -26,6 +26,9 @@
 ✅ **Box shadows** - Subtle depth for transaction cards  
 ✅ **AppBar spacing** - Proper top margin for header elements  
 ✅ **Color consistency** - All FABs and action buttons use teal  
+✅ **Stok screen redesign** - Pill-style tab selector, unified white header, product card with padding + border-radius + square image  
+✅ **Navigation update** - Order tab renamed to "Proses" with hourglass icon  
+✅ **Analyzer cleanup** - 110 → 0 issues (withOpacity→withValues, const constructors, unused imports removed)  
 
 ### ☁️ Cloud Storage (Cloudflare R2):
 ✅ S3-compatible API integration  

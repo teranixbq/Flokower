@@ -50,7 +50,7 @@ class _StockScreenState extends ConsumerState<StockScreen>
           Container(
             color: FlokowerTheme.white,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
               child: Container(
                 padding: const EdgeInsets.all(3),
                 decoration: BoxDecoration(
@@ -162,19 +162,19 @@ class _MaterialsTab extends ConsumerWidget {
     final state = ref.watch(materialProvider);
 
     if (state.materials.isEmpty) {
-      return Center(
+      return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.inventory_2_outlined,
                 size: 56, color: FlokowerTheme.lightGray),
-            const SizedBox(height: 16),
-            const Text('Belum ada bahan baku',
+            SizedBox(height: 16),
+            Text('Belum ada bahan baku',
                 style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: FlokowerTheme.darkGray)),
-            const SizedBox(height: 6),
+            SizedBox(height: 6),
             Text('Tekan + untuk menambahkan',
                 style: TextStyle(fontSize: 13, color: FlokowerTheme.mediumGray)),
           ],
@@ -183,7 +183,7 @@ class _MaterialsTab extends ConsumerWidget {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 80),
       itemCount: state.materials.length,
       itemBuilder: (context, index) {
         final material = state.materials[index];
@@ -228,8 +228,8 @@ class _MaterialsTab extends ConsumerWidget {
                 Container(
                   width: 42,
                   height: 42,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE3F2FD),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFE3F2FD),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -259,7 +259,7 @@ class _MaterialsTab extends ConsumerWidget {
                         material.reservedQuantity > 0
                             ? '${material.currentQuantity} ${material.unit} \u2022 reserved: ${material.reservedQuantity}'
                             : '${material.currentQuantity} ${material.unit}',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 13,
                           color: FlokowerTheme.mediumGray,
                           fontWeight: FontWeight.w500,
@@ -278,7 +278,7 @@ class _MaterialsTab extends ConsumerWidget {
 }
 
 // ─────────────────────────────────────────────────────────
-// PRODUK TAB — compact 2-column grid
+// PRODUK TAB — compact 2-column grid (matches design)
 // ─────────────────────────────────────────────────────────
 class _ProductsTab extends ConsumerWidget {
   const _ProductsTab();
@@ -288,38 +288,40 @@ class _ProductsTab extends ConsumerWidget {
     final state = ref.watch(productProvider);
 
     if (state.products.isEmpty) {
-      return Center(
+      return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.local_florist_outlined,
                 size: 56, color: FlokowerTheme.lightGray),
-            const SizedBox(height: 16),
-            const Text('Belum ada produk',
+            SizedBox(height: 16),
+            Text('Belum ada produk',
                 style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: FlokowerTheme.darkGray)),
-            const SizedBox(height: 6),
+            SizedBox(height: 6),
             Text('Tekan + untuk menambahkan',
-                style: TextStyle(fontSize: 13, color: FlokowerTheme.mediumGray)),
+                style:
+                    TextStyle(fontSize: 13, color: FlokowerTheme.mediumGray)),
           ],
         ),
       );
     }
 
     return GridView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 80),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 10,
+        mainAxisSpacing: 14,
+        crossAxisSpacing: 12,
         childAspectRatio: 0.78,
       ),
       itemCount: state.products.length,
       itemBuilder: (context, index) {
         final product = state.products[index];
-        final hasImage = product.imageUrl != null && product.imageUrl!.isNotEmpty;
+        final hasImage =
+            product.imageUrl != null && product.imageUrl!.isNotEmpty;
         return GestureDetector(
           onTap: () => showDialog(
               context: context,
@@ -327,73 +329,67 @@ class _ProductsTab extends ConsumerWidget {
           child: Container(
             decoration: BoxDecoration(
               color: FlokowerTheme.white,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(15),
               border: Border.all(color: const Color(0xFFEDEDED)),
-              boxShadow: [
+              boxShadow: const [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
+                  color: Color(0x0D000000),
                   blurRadius: 8,
-                  offset: const Offset(0, 4),
+                  offset: Offset(0, 4),
                 ),
               ],
             ),
-            clipBehavior: Clip.antiAlias,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // ─── Foto produk ───
+                // ─── Image (square via AspectRatio, fills top area) ───
                 Expanded(
-                  child: ClipRRect(
-                    borderRadius:
-                        const BorderRadius.vertical(top: Radius.circular(16)),
-                    child: hasImage
-                        ? Image.network(
-                            product.imageUrl!,
-                            fit: BoxFit.cover,
-                            loadingBuilder: (context, child, progress) {
-                              if (progress == null) return child;
-                              return Container(
-                                color: FlokowerTheme.offWhite,
-                                child: const Center(
-                                  child: SizedBox(
-                                    width: 22,
-                                    height: 22,
-                                    child: CircularProgressIndicator(
-                                        strokeWidth: 2),
-                                  ),
-                                ),
-                              );
-                            },
-                            errorBuilder: (context, error, stack) =>
-                                const _ProductImagePlaceholder(),
-                          )
-                        : const _ProductImagePlaceholder(),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: AspectRatio(
+                      aspectRatio: 1.0,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          color: FlokowerTheme.offWhite,
+                          child: hasImage
+                              ? Image.network(
+                                  product.imageUrl!,
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                  errorBuilder: (_, __, ___) =>
+                                      const _ProductImagePlaceholder(),
+                                )
+                              : const _ProductImagePlaceholder(),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-                // ─── Info: nama + harga (compact, no gap) ───
+                // ─── Name + Price (compact bottom section) ───
                 Padding(
-                  padding:
-                      const EdgeInsets.fromLTRB(10, 6, 10, 8),
+                  padding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         product.name,
-                        maxLines: 2,
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
                           color: FlokowerTheme.black,
-                          height: 1.25,
+                          height: 1.2,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 2),
                       Text(
                         'Rp ${_fmt(product.price)}',
                         style: const TextStyle(
-                          fontSize: 13,
+                          fontSize: 12,
                           fontWeight: FontWeight.w700,
                           color: FlokowerTheme.accentTeal,
                         ),

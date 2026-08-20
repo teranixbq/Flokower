@@ -4,9 +4,7 @@ import '../../../../shared/theme/flokower_theme.dart';
 import '../../../../shared/widgets/toast.dart';
 import '../../../../shared/models/product_model.dart';
 import '../../../../shared/models/transaction_model.dart';
-import '../../../../shared/models/material_model.dart';
 import '../../../inventory/presentation/providers/material_provider.dart';
-import '../../../inventory/presentation/providers/product_provider.dart';
 import '../../presentation/providers/transaction_provider.dart';
 import 'product_gallery_screen.dart';
 
@@ -240,7 +238,7 @@ class _CreateOrderScreenState extends ConsumerState<CreateOrderScreen> {
                 decoration: BoxDecoration(
                   color: FlokowerTheme.white,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: hasStock ? const Color(0xFFEEEEEE) : FlokowerTheme.accentRed.withOpacity(0.3)),
+                  border: Border.all(color: hasStock ? const Color(0xFFEEEEEE) : FlokowerTheme.accentRed.withValues(alpha: 0.3)),
                 ),
                 child: Column(
                   children: [
@@ -259,7 +257,7 @@ class _CreateOrderScreenState extends ConsumerState<CreateOrderScreen> {
                             borderRadius: BorderRadius.circular(8),
                             child: product.imageUrl != null && product.imageUrl!.isNotEmpty
                                 ? Image.network(product.imageUrl!, fit: BoxFit.cover)
-                                : Icon(Icons.image, color: FlokowerTheme.lightGray),
+                                : const Icon(Icons.image, color: FlokowerTheme.lightGray),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -270,7 +268,7 @@ class _CreateOrderScreenState extends ConsumerState<CreateOrderScreen> {
                             children: [
                               Text(product.name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                               if (!hasStock)
-                                Text('Stok tidak cukup', style: TextStyle(fontSize: 12, color: FlokowerTheme.accentRed)),
+                                const Text('Stok tidak cukup', style: TextStyle(fontSize: 12, color: FlokowerTheme.accentRed)),
                             ],
                           ),
                         ),
@@ -330,7 +328,7 @@ class _CreateOrderScreenState extends ConsumerState<CreateOrderScreen> {
                   decoration: BoxDecoration(
                     color: FlokowerTheme.white,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: isEnough ? const Color(0xFFEEEEEE) : FlokowerTheme.accentRed.withOpacity(0.3)),
+                    border: Border.all(color: isEnough ? const Color(0xFFEEEEEE) : FlokowerTheme.accentRed.withValues(alpha: 0.3)),
                   ),
                   child: Row(
                     children: [
@@ -348,7 +346,7 @@ class _CreateOrderScreenState extends ConsumerState<CreateOrderScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: FlokowerTheme.black)),
-                            Text('Tersedia: $available ${mat.unit}', style: TextStyle(fontSize: 12, color: FlokowerTheme.mediumGray)),
+                            Text('Tersedia: $available ${mat.unit}', style: const TextStyle(fontSize: 12, color: FlokowerTheme.mediumGray)),
                           ],
                         ),
                       ),
@@ -465,7 +463,7 @@ class _QtyButton extends StatelessWidget {
       child: Container(
         width: 40, height: 40,
         decoration: BoxDecoration(
-          color: onTap != null ? FlokowerTheme.offWhite : FlokowerTheme.offWhite.withOpacity(0.5),
+          color: onTap != null ? FlokowerTheme.offWhite : FlokowerTheme.offWhite.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Icon(icon, size: 20, color: onTap != null ? FlokowerTheme.black : FlokowerTheme.lightGray),

@@ -115,7 +115,7 @@ class _ToastWidgetState extends State<_ToastWidget> with SingleTickerProviderSta
                 color: _bgColor,
                 borderRadius: BorderRadius.circular(14),
                 boxShadow: [
-                  BoxShadow(color: _bgColor.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 4)),
+                  BoxShadow(color: _bgColor.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4)),
                 ],
               ),
               child: Row(

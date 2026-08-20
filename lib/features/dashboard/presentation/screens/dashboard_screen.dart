@@ -51,10 +51,10 @@ class DashboardScreen extends ConsumerWidget {
             ],
           ),
         ),
-        actions: [
+        actions: const [
           Padding(
-            padding: const EdgeInsets.only(top: 50.0, right: 16.0),
-            child: const SettingsButton(),
+            padding: EdgeInsets.only(top: 50.0, right: 16.0),
+            child: SettingsButton(),
           ),
         ],
       ),
@@ -157,12 +157,12 @@ class DashboardScreen extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: FlokowerTheme.silver),
                   ),
-                  child: Column(
+                  child: const Column(
                     children: [
                       Icon(Icons.receipt_long_rounded, size: 40, color: FlokowerTheme.lightGray),
-                      const SizedBox(height: 12),
-                      const Text('Belum ada transaksi', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: FlokowerTheme.darkGray)),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 12),
+                      Text('Belum ada transaksi', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: FlokowerTheme.darkGray)),
+                      SizedBox(height: 4),
                       Text('Buat order pertama Anda', style: TextStyle(fontSize: 12, color: FlokowerTheme.mediumGray)),
                     ],
                   ),
@@ -177,7 +177,7 @@ class DashboardScreen extends ConsumerWidget {
                     border: Border.all(color: const Color(0xFFEEEEEE)),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.05),
                         blurRadius: 10,
                         offset: const Offset(0, 2),
                       ),
@@ -223,7 +223,7 @@ class DashboardScreen extends ConsumerWidget {
                             const SizedBox(height: 2),
                             Text(
                               '${tx.orderDate.day}/${tx.orderDate.month} • Qty: ${tx.quantity}',
-                              style: TextStyle(fontSize: 12, color: FlokowerTheme.mediumGray),
+                              style: const TextStyle(fontSize: 12, color: FlokowerTheme.mediumGray),
                             ),
                           ],
                         ),
@@ -287,7 +287,7 @@ class _RevenueCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: FlokowerTheme.accentTeal.withOpacity(0.3),
+            color: FlokowerTheme.accentTeal.withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -299,7 +299,7 @@ class _RevenueCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.15),
+              color: Colors.white.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Text('Hari Ini', style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w600)),
@@ -346,7 +346,7 @@ class _MetricCard extends StatelessWidget {
         border: Border.all(color: const Color(0xFFEEEEEE)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -358,7 +358,7 @@ class _MetricCard extends StatelessWidget {
         children: [
           Text(
             label,
-            style: TextStyle(fontSize: 11, color: FlokowerTheme.mediumGray, fontWeight: FontWeight.w500),
+            style: const TextStyle(fontSize: 11, color: FlokowerTheme.mediumGray, fontWeight: FontWeight.w500),
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 8),
@@ -369,7 +369,7 @@ class _MetricCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   value,
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: FlokowerTheme.black, letterSpacing: -1),
+                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: FlokowerTheme.black, letterSpacing: -1),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),

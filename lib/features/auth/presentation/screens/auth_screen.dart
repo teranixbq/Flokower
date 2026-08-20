@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../shared/theme/flokower_theme.dart';
-import '../../../../shared/widgets/toast.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -97,7 +95,7 @@ class _AuthScreenState extends State<AuthScreen> {
                 style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: FlokowerTheme.black, letterSpacing: -0.5),
               ),
               const SizedBox(height: 8),
-              Text(
+              const Text(
                 'Manajemen Inventaris & Penjualan Florist',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 14, color: FlokowerTheme.mediumGray),
@@ -121,7 +119,7 @@ class _AuthScreenState extends State<AuthScreen> {
                           decoration: BoxDecoration(
                             color: _isLogin ? FlokowerTheme.white : Colors.transparent,
                             borderRadius: BorderRadius.circular(10),
-                            boxShadow: _isLogin ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 1))] : null,
+                            boxShadow: _isLogin ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4, offset: const Offset(0, 1))] : null,
                           ),
                           child: Text(
                             'Masuk',
@@ -142,7 +140,7 @@ class _AuthScreenState extends State<AuthScreen> {
                           decoration: BoxDecoration(
                             color: !_isLogin ? FlokowerTheme.white : Colors.transparent,
                             borderRadius: BorderRadius.circular(10),
-                            boxShadow: !_isLogin ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 1))] : null,
+                            boxShadow: !_isLogin ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4, offset: const Offset(0, 1))] : null,
                           ),
                           child: Text(
                             'Daftar',

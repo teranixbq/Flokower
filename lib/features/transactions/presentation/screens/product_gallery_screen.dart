@@ -156,12 +156,12 @@ class _ProductGalleryScreenState extends ConsumerState<ProductGalleryScreen> {
           // Product grid
           Expanded(
             child: filteredProducts.isEmpty
-                ? Center(
+                ? const Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(Icons.search_off, size: 64, color: FlokowerTheme.lightGray),
-                        const SizedBox(height: 16),
+                        SizedBox(height: 16),
                         Text(
                           'Produk tidak ditemukan',
                           style: TextStyle(
@@ -214,21 +214,21 @@ class _ProductGalleryScreenState extends ConsumerState<ProductGalleryScreen> {
                                           fit: BoxFit.cover,
                                           errorBuilder: (context, error, stackTrace) {
                                             return Container(
-                                              color: FlokowerTheme.lightGray.withOpacity(0.3),
-                                              child: Icon(Icons.image_not_supported, size: 40, color: FlokowerTheme.lightGray),
+                                              color: FlokowerTheme.lightGray.withValues(alpha: 0.3),
+                                              child: const Icon(Icons.image_not_supported, size: 40, color: FlokowerTheme.lightGray),
                                             );
                                           },
                                         )
                                       else
                                         Container(
-                                          color: FlokowerTheme.lightGray.withOpacity(0.3),
-                                          child: Icon(Icons.image, size: 40, color: FlokowerTheme.lightGray),
+                                          color: FlokowerTheme.lightGray.withValues(alpha: 0.3),
+                                          child: const Icon(Icons.image, size: 40, color: FlokowerTheme.lightGray),
                                         ),
                                       
                                       // Selection indicator
                                       if (isSelected)
                                         Container(
-                                          color: FlokowerTheme.accentGreen.withOpacity(0.3),
+                                          color: FlokowerTheme.accentGreen.withValues(alpha: 0.3),
                                           child: const Center(
                                             child: Icon(
                                               Icons.check_circle,
@@ -241,7 +241,7 @@ class _ProductGalleryScreenState extends ConsumerState<ProductGalleryScreen> {
                                       // Disabled overlay for insufficient stock
                                       if (!hasStock)
                                         Container(
-                                          color: FlokowerTheme.lightGray.withOpacity(0.5),
+                                          color: FlokowerTheme.lightGray.withValues(alpha: 0.5),
                                           child: Center(
                                             child: Container(
                                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -301,7 +301,7 @@ class _ProductGalleryScreenState extends ConsumerState<ProductGalleryScreen> {
                 color: FlokowerTheme.white,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 10,
                     offset: const Offset(0, -2),
                   ),

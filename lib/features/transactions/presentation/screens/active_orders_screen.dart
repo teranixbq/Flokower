@@ -49,7 +49,7 @@ class _ActiveOrdersScreenState extends ConsumerState<ActiveOrdersScreen> {
                   const SizedBox(height: 20),
                   const Text('Semua Beres!', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: FlokowerTheme.black)),
                   const SizedBox(height: 6),
-                  Text('Tidak ada order yang sedang diproses', style: TextStyle(fontSize: 14, color: FlokowerTheme.mediumGray)),
+                  const Text('Tidak ada order yang sedang diproses', style: TextStyle(fontSize: 14, color: FlokowerTheme.mediumGray)),
                 ],
               ),
             )
@@ -68,7 +68,7 @@ class _ActiveOrdersScreenState extends ConsumerState<ActiveOrdersScreen> {
                   decoration: BoxDecoration(
                     color: FlokowerTheme.white,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: isLong ? FlokowerTheme.accentOrange.withOpacity(0.4) : const Color(0xFFEEEEEE)),
+                    border: Border.all(color: isLong ? FlokowerTheme.accentOrange.withValues(alpha: 0.4) : const Color(0xFFEEEEEE)),
                   ),
                   child: Column(
                     children: [
@@ -102,7 +102,7 @@ class _ActiveOrdersScreenState extends ConsumerState<ActiveOrdersScreen> {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(tx.productName, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: FlokowerTheme.black)),
-                                      Text('${hours}j ${minutes}m lalu • Qty: ${tx.quantity}', style: TextStyle(fontSize: 12, color: FlokowerTheme.mediumGray)),
+                                      Text('${hours}j ${minutes}m lalu • Qty: ${tx.quantity}', style: const TextStyle(fontSize: 12, color: FlokowerTheme.mediumGray)),
                                     ],
                                   ),
                                 ),
@@ -125,7 +125,7 @@ class _ActiveOrdersScreenState extends ConsumerState<ActiveOrdersScreen> {
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text('Total', style: TextStyle(fontSize: 13, color: FlokowerTheme.mediumGray)),
+                                  const Text('Total', style: TextStyle(fontSize: 13, color: FlokowerTheme.mediumGray)),
                                   Text('Rp ${_fmt(tx.totalAmount)}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: FlokowerTheme.black)),
                                 ],
                               ),
@@ -133,9 +133,9 @@ class _ActiveOrdersScreenState extends ConsumerState<ActiveOrdersScreen> {
                             if (tx.customerName != null) ...[
                               const SizedBox(height: 8),
                               Row(children: [
-                                Icon(Icons.person_outline_rounded, size: 14, color: FlokowerTheme.mediumGray),
+                                const Icon(Icons.person_outline_rounded, size: 14, color: FlokowerTheme.mediumGray),
                                 const SizedBox(width: 4),
-                                Text(tx.customerName!, style: TextStyle(fontSize: 12, color: FlokowerTheme.mediumGray)),
+                                Text(tx.customerName!, style: const TextStyle(fontSize: 12, color: FlokowerTheme.mediumGray)),
                               ]),
                             ],
 
@@ -232,7 +232,7 @@ class _ActiveOrdersScreenState extends ConsumerState<ActiveOrdersScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Batalkan Order?', style: TextStyle(fontWeight: FontWeight.w700)),
-        content: Text('Stok bahan akan dikembalikan. Tidak ada pengurangan stok.'),
+        content: const Text('Stok bahan akan dikembalikan. Tidak ada pengurangan stok.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Tidak')),
           ElevatedButton(

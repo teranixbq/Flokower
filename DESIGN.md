@@ -374,7 +374,7 @@ BadgeStyle: {
     textColor: AppColors.error,
   },
   neutral: {
-    backgroundColor: AppColors.neutral.withOpacity(0.1),
+    backgroundColor: AppColors.neutral.withValues(alpha: 0.1),
     textColor: AppColors.neutral,
   }
 }

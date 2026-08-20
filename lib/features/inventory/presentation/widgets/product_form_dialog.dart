@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -140,7 +139,7 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
                             child: Icon(m.unit == 'lembar' ? Icons.layers_outlined : Icons.eco_outlined, size: 18, color: FlokowerTheme.accentBlue),
                           ),
                           title: Text(m.name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                          subtitle: Text('${m.availableQuantity} ${m.unit} tersedia', style: TextStyle(fontSize: 12, color: FlokowerTheme.mediumGray)),
+                          subtitle: Text('${m.availableQuantity} ${m.unit} tersedia', style: const TextStyle(fontSize: 12, color: FlokowerTheme.mediumGray)),
                           trailing: alreadyAdded
                               ? const Icon(Icons.check_circle_rounded, size: 18, color: FlokowerTheme.accentGreen)
                               : null,
@@ -374,13 +373,13 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
                                     : null,
                           ),
                           child: _imageBytes == null && (_existingImageUrl == null || _existingImageUrl!.isEmpty)
-                              ? Column(
+                              ? const Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Icon(Icons.add_photo_alternate_outlined, size: 40, color: FlokowerTheme.lightGray),
-                                    const SizedBox(height: 8),
+                                    SizedBox(height: 8),
                                     Text('Tap untuk upload foto', style: TextStyle(fontSize: 13, color: FlokowerTheme.mediumGray)),
-                                    const SizedBox(height: 4),
+                                    SizedBox(height: 4),
                                     Text('dari galeri', style: TextStyle(fontSize: 11, color: FlokowerTheme.lightGray)),
                                   ],
                                 )
@@ -431,7 +430,7 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
                         decoration: InputDecoration(
                           hintText: '100.000',
                           prefixText: 'Rp ',
-                          prefixStyle: TextStyle(color: FlokowerTheme.mediumGray, fontWeight: FontWeight.w600),
+                          prefixStyle: const TextStyle(color: FlokowerTheme.mediumGray, fontWeight: FontWeight.w600),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                         ),
@@ -484,10 +483,10 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
                             color: FlokowerTheme.offWhite,
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Column(
+                          child: const Column(
                             children: [
                               Icon(Icons.inventory_2_outlined, size: 32, color: FlokowerTheme.lightGray),
-                              const SizedBox(height: 8),
+                              SizedBox(height: 8),
                               Text('Belum ada bahan', style: TextStyle(fontSize: 13, color: FlokowerTheme.mediumGray)),
                             ],
                           ),
@@ -517,7 +516,7 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(_getMaterialName(ing.materialId), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: FlokowerTheme.black)),
-                                      Text('${ing.quantityNeeded} unit', style: TextStyle(fontSize: 11, color: FlokowerTheme.mediumGray)),
+                                      Text('${ing.quantityNeeded} unit', style: const TextStyle(fontSize: 11, color: FlokowerTheme.mediumGray)),
                                     ],
                                   ),
                                 ),

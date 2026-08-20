@@ -265,7 +265,7 @@ class _MaterialFormState extends ConsumerState<MaterialForm> {
                       const SizedBox(height: 20),
                       const Text('Batas Peringatan', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: FlokowerTheme.darkGray)),
                       const SizedBox(height: 4),
-                      Text('Notifikasi muncul jika stok di bawah angka ini', style: TextStyle(fontSize: 11, color: FlokowerTheme.mediumGray)),
+                      const Text('Notifikasi muncul jika stok di bawah angka ini', style: TextStyle(fontSize: 11, color: FlokowerTheme.mediumGray)),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _thresholdController,
