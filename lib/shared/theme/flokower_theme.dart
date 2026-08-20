@@ -90,7 +90,7 @@ class FlokowerTheme {
         backgroundColor: accentTeal,
         foregroundColor: white,
         elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
         textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
       ),

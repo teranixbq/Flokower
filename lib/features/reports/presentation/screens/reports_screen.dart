@@ -34,152 +34,462 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
   @override
   Widget build(BuildContext context) {
     final txState = ref.watch(transactionProvider);
-    
+
     // Stats dihitung dari SEMUA transaksi (tidak terpengaruh filter)
-    final allCompleted = txState.transactions.where((t) => t.isCompleted).toList();
-    final allCancelled = txState.transactions.where((t) => t.isCancelled).toList();
-    final totalRevenue = allCompleted.fold(0.0, (sum, t) => sum + t.totalAmount);
-    
+    final allCompleted =
+        txState.transactions.where((t) => t.isCompleted).toList();
+    final allCancelled =
+        txState.transactions.where((t) => t.isCancelled).toList();
+    final totalRevenue =
+        allCompleted.fold(0.0, (sum, t) => sum + t.totalAmount);
+
     // Filter hanya mempengaruhi list di bawah
-    final filtered = _filter == 'all' ? txState.transactions : txState.transactions.where((t) => t.status == _filter).toList();
+    final filtered = _filter == 'all'
+        ? txState.transactions
+        : txState.transactions
+            .where((t) => t.status == _filter)
+            .toList();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Laporan Penjualan'), actions: const [SettingsButton()]),
+      appBar: AppBar(
+          title: const Text('Laporan Penjualan'),
+          actions: const [SettingsButton()]),
       body: Column(
         children: [
-          // ─── Summary + Filters in ONE white block ───
+          // ─── Summary cards section ───
           Container(
             width: double.infinity,
-            color: FlokowerTheme.white,
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+            color: FlokowerTheme.offWhite,
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Summary row
-                Row(
+                // ─── Summary: 3 cards (Pendapatan besar kiri, Selesai+Batal stacked kanan) ───
+                IntrinsicHeight(
+                  child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Expanded(child: _SummaryTile(title: 'Pendapatan', value: CurrencyInputFormatter.display(totalRevenue), color: FlokowerTheme.accentGreen)),
+                    // ─── Pendapatan card (60% width) ───
+                    Expanded(
+                      flex: 3,
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: FlokowerTheme.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x0A000000),
+                              blurRadius: 8,
+                              offset: Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            // Label + green dot
+                            Row(
+                              children: [
+                                Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                    color: FlokowerTheme.accentGreen,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                const Text(
+                                  'Pendapatan',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: FlokowerTheme.mediumGray,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            // Big nominal value (teal)
+                            Text(
+                              CurrencyInputFormatter.display(totalRevenue),
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w800,
+                                color: FlokowerTheme.accentTeal,
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            // Subtitle
+                            Text(
+                              '${allCompleted.length} transaksi selesai',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: FlokowerTheme.mediumGray,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            // Green wave decoration
+                            CustomPaint(
+                              size: const Size(double.infinity, 20),
+                              painter: _WavePainter(),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                     const SizedBox(width: 10),
-                    Expanded(child: _SummaryTile(title: 'Selesai', value: '${allCompleted.length}', color: FlokowerTheme.accentBlue)),
-                    const SizedBox(width: 10),
-                    Expanded(child: _SummaryTile(title: 'Batal', value: '${allCancelled.length}', color: FlokowerTheme.accentRed)),
+                    // ─── Selesai + Batal stacked (40% width) ───
+                    Expanded(
+                      flex: 2,
+                      child: Column(
+                        children: [
+                          // Selesai card — count atas, label bawah, dot kanan atas
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: FlokowerTheme.accentBlueLight,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Color(0x0A000000),
+                                  blurRadius: 8,
+                                  offset: Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Stack(
+                              children: [
+                                // Dot kanan atas
+                                Positioned(
+                                  top: 0,
+                                  right: 0,
+                                  child: Container(
+                                    width: 8,
+                                    height: 8,
+                                    decoration: BoxDecoration(
+                                      color: FlokowerTheme.accentBlue,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                  ),
+                                ),
+                                // Count + label
+                                Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '${allCompleted.length}',
+                                      style: const TextStyle(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.w800,
+                                        color: FlokowerTheme.black,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    const Text(
+                                      'Selesai',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: FlokowerTheme.mediumGray,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          // Batal card — count atas, label bawah, dot kanan atas
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: FlokowerTheme.accentRedLight,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Color(0x0A000000),
+                                  blurRadius: 8,
+                                  offset: Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Stack(
+                              children: [
+                                // Dot kanan atas
+                                Positioned(
+                                  top: 0,
+                                  right: 0,
+                                  child: Container(
+                                    width: 8,
+                                    height: 8,
+                                    decoration: BoxDecoration(
+                                      color: FlokowerTheme.accentRed,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                  ),
+                                ),
+                                // Count + label
+                                Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '${allCancelled.length}',
+                                      style: const TextStyle(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.w800,
+                                        color: FlokowerTheme.black,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    const Text(
+                                      'Batal',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: FlokowerTheme.mediumGray,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
-                const SizedBox(height: 16),
-                // Filter chips
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      _FilterChip(label: 'Semua', selected: _filter == 'all', onTap: () => setState(() => _filter = 'all')),
-                      const SizedBox(width: 8),
-                      _FilterChip(label: 'Selesai', selected: _filter == 'completed', onTap: () => setState(() => _filter = 'completed')),
-                      const SizedBox(width: 8),
-                      _FilterChip(label: 'Proses', selected: _filter == 'in_progress', onTap: () => setState(() => _filter = 'in_progress')),
-                      const SizedBox(width: 8),
-                      _FilterChip(label: 'Batal', selected: _filter == 'cancelled', onTap: () => setState(() => _filter = 'cancelled')),
-                    ],
-                  ),
                 ),
               ],
             ),
           ),
 
-          // ─── Transaction List ───
+          // ─── Filter chips container (off-white bg with shadow) ───
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: const BoxDecoration(
+              color: FlokowerTheme.offWhite,
+              boxShadow: [
+                BoxShadow(
+                  color: Color(0x0D000000),
+                  blurRadius: 8,
+                  offset: Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _FilterChip(
+                      label: 'Semua',
+                      selected: _filter == 'all',
+                      onTap: () => setState(() => _filter = 'all')),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _FilterChip(
+                      label: 'Selesai',
+                      selected: _filter == 'completed',
+                      onTap: () =>
+                          setState(() => _filter = 'completed')),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _FilterChip(
+                      label: 'Dalam Proses',
+                      selected: _filter == 'in_progress',
+                      onTap: () =>
+                          setState(() => _filter = 'in_progress')),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _FilterChip(
+                      label: 'Dibatalkan',
+                      selected: _filter == 'cancelled',
+                      onTap: () =>
+                          setState(() => _filter = 'cancelled')),
+                ),
+              ],
+            ),
+          ),
+
+          // ─── Transaction List (off-white bg) ───
           Expanded(
-            child: filtered.isEmpty
-                ? const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.receipt_long_rounded, size: 48, color: FlokowerTheme.lightGray),
-                        SizedBox(height: 12),
-                        Text('Belum ada transaksi', style: TextStyle(fontSize: 14, color: FlokowerTheme.mediumGray)),
-                      ],
-                    ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: filtered.length,
-                    itemBuilder: (context, index) {
-                      final tx = filtered[index];
-                      final dateStr = '${tx.orderDate.day}/${tx.orderDate.month}/${tx.orderDate.year} ${tx.orderDate.hour.toString().padLeft(2, '0')}:${tx.orderDate.minute.toString().padLeft(2, '0')}';
-                      
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: FlokowerTheme.white,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: const Color(0xFFEEEEEE)),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 40, height: 40,
-                              decoration: BoxDecoration(
-                                color: tx.isCompleted ? FlokowerTheme.accentGreenLight : tx.isCancelled ? FlokowerTheme.accentRedLight : FlokowerTheme.accentOrangeLight,
-                                borderRadius: BorderRadius.circular(10),
+            child: Container(
+              color: FlokowerTheme.offWhite,
+              child: filtered.isEmpty
+                  ? const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.receipt_long_rounded,
+                              size: 48, color: FlokowerTheme.lightGray),
+                          SizedBox(height: 12),
+                          Text('Belum ada transaksi',
+                              style: TextStyle(
+                                  fontSize: 14,
+                                  color: FlokowerTheme.mediumGray)),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: filtered.length,
+                      itemBuilder: (context, index) {
+                        final tx = filtered[index];
+                        final dateStr =
+                            '${tx.orderDate.day}/${tx.orderDate.month}/${tx.orderDate.year} ${tx.orderDate.hour.toString().padLeft(2, '0')}:${tx.orderDate.minute.toString().padLeft(2, '0')}';
+
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 10),
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: FlokowerTheme.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border:
+                                Border.all(color: const Color(0xFFEEEEEE)),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x0D000000),
+                                blurRadius: 8,
+                                offset: Offset(0, 4),
                               ),
-                              child: Builder(builder: (_) {
-                                final imgUrl = _getProductImageUrl(tx);
-                                if (imgUrl != null && imgUrl.isNotEmpty) {
-                                  return ClipRRect(
-                                    borderRadius: BorderRadius.circular(10),
-                                    child: Image.network(
-                                      imgUrl,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (_, __, ___) => Icon(
-                                        tx.isCompleted ? Icons.check_rounded : tx.isCancelled ? Icons.close_rounded : Icons.hourglass_empty_rounded,
-                                        size: 18,
-                                        color: tx.isCompleted ? FlokowerTheme.accentGreen : tx.isCancelled ? FlokowerTheme.accentRed : FlokowerTheme.accentOrange,
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              // ─── Image (50x50, rounded 10) ───
+                              Container(
+                                width: 50,
+                                height: 50,
+                                decoration: BoxDecoration(
+                                  color: tx.isCompleted
+                                      ? FlokowerTheme.accentGreenLight
+                                      : tx.isCancelled
+                                          ? FlokowerTheme.accentRedLight
+                                          : FlokowerTheme.accentOrangeLight,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Builder(builder: (_) {
+                                  final imgUrl = _getProductImageUrl(tx);
+                                  if (imgUrl != null &&
+                                      imgUrl.isNotEmpty) {
+                                    return ClipRRect(
+                                      borderRadius:
+                                          BorderRadius.circular(10),
+                                      child: Image.network(
+                                        imgUrl,
+                                        fit: BoxFit.cover,
+                                        width: double.infinity,
+                                        height: double.infinity,
+                                        errorBuilder: (_, __, ___) => Icon(
+                                          tx.isCompleted
+                                              ? Icons.check_rounded
+                                              : tx.isCancelled
+                                                  ? Icons.close_rounded
+                                                  : Icons
+                                                      .hourglass_empty_rounded,
+                                          size: 20,
+                                          color: tx.isCompleted
+                                              ? FlokowerTheme.accentGreen
+                                              : tx.isCancelled
+                                                  ? FlokowerTheme.accentRed
+                                                  : FlokowerTheme
+                                                      .accentOrange,
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                  return Icon(
+                                    tx.isCompleted
+                                        ? Icons.check_rounded
+                                        : tx.isCancelled
+                                            ? Icons.close_rounded
+                                            : Icons.hourglass_empty_rounded,
+                                    size: 20,
+                                    color: tx.isCompleted
+                                        ? FlokowerTheme.accentGreen
+                                        : tx.isCancelled
+                                            ? FlokowerTheme.accentRed
+                                            : FlokowerTheme.accentOrange,
+                                  );
+                                }),
+                              ),
+                              const SizedBox(width: 12),
+                              // ─── Middle column: Nama → Tanggal/Qty → Rp ───
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    Text(tx.productName,
+                                        style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                            color: FlokowerTheme.black)),
+                                    const SizedBox(height: 2),
+                                    Text('$dateStr \u2022 Qty: ${tx.quantity}',
+                                        style: const TextStyle(
+                                            fontSize: 11,
+                                            color:
+                                                FlokowerTheme.mediumGray)),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      CurrencyInputFormatter.display(
+                                          tx.totalAmount),
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                        color: FlokowerTheme.black,
                                       ),
                                     ),
-                                  );
-                                }
-                                return Icon(
-                                  tx.isCompleted ? Icons.check_rounded : tx.isCancelled ? Icons.close_rounded : Icons.hourglass_empty_rounded,
-                                  size: 18,
-                                  color: tx.isCompleted ? FlokowerTheme.accentGreen : tx.isCancelled ? FlokowerTheme.accentRed : FlokowerTheme.accentOrange,
-                                );
-                              }),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(tx.productName, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: FlokowerTheme.black)),
-                                  const SizedBox(height: 2),
-                                  Text('$dateStr • Qty: ${tx.quantity}', style: const TextStyle(fontSize: 11, color: FlokowerTheme.mediumGray)),
-                                  if (tx.customerName != null)
-                                    Text('👤 ${tx.customerName}', style: const TextStyle(fontSize: 11, color: FlokowerTheme.mediumGray)),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text(CurrencyInputFormatter.display(tx.totalAmount), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: FlokowerTheme.black)),
-                                const SizedBox(height: 4),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: tx.isCompleted ? FlokowerTheme.accentGreenLight : tx.isCancelled ? FlokowerTheme.accentRedLight : FlokowerTheme.accentOrangeLight,
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Text(
-                                    tx.isCompleted ? 'Selesai' : tx.isCancelled ? 'Batal' : 'Proses',
-                                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: tx.isCompleted ? FlokowerTheme.accentGreen : tx.isCancelled ? FlokowerTheme.accentRed : FlokowerTheme.accentOrange),
+                              // ─── Right: Status badge ONLY ───
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: tx.isCompleted
+                                      ? FlokowerTheme.accentGreenLight
+                                      : tx.isCancelled
+                                          ? FlokowerTheme.accentRedLight
+                                          : FlokowerTheme.accentOrangeLight,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  tx.isCompleted
+                                      ? 'Selesai'
+                                      : tx.isCancelled
+                                          ? 'Batal'
+                                          : 'Proses',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: tx.isCompleted
+                                        ? FlokowerTheme.accentGreen
+                                        : tx.isCancelled
+                                            ? FlokowerTheme.accentRed
+                                            : FlokowerTheme.accentOrange,
                                   ),
                                 ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+            ),
           ),
         ],
       ),
@@ -187,51 +497,83 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
   }
 }
 
-class _SummaryTile extends StatelessWidget {
-  final String title;
-  final String value;
-  final Color color;
-  const _SummaryTile({required this.title, required this.value, required this.color});
+// ─────────────────────────────────────────────────────────
+// Green wave decoration painter
+// ─────────────────────────────────────────────────────────
+class _WavePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = FlokowerTheme.accentGreen.withValues(alpha: 0.3)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.5
+      ..strokeCap = StrokeCap.round;
+
+    final path = Path();
+    path.moveTo(0, size.height * 0.6);
+    path.quadraticBezierTo(
+      size.width * 0.15, size.height * 0.1,
+      size.width * 0.3, size.height * 0.5,
+    );
+    path.quadraticBezierTo(
+      size.width * 0.45, size.height * 0.9,
+      size.width * 0.6, size.height * 0.4,
+    );
+    path.quadraticBezierTo(
+      size.width * 0.75, size.height * 0.0,
+      size.width * 0.9, size.height * 0.3,
+    );
+    path.lineTo(size.width, size.height * 0.3);
+
+    canvas.drawPath(path, paint);
+  }
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: FlokowerTheme.offWhite,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(width: 8, height: 8, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(4))),
-          const SizedBox(height: 8),
-          Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: FlokowerTheme.black, letterSpacing: -0.3)),
-          const SizedBox(height: 2),
-          Text(title, style: const TextStyle(fontSize: 11, color: FlokowerTheme.mediumGray)),
-        ],
-      ),
-    );
-  }
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
+// ─────────────────────────────────────────────────────────
+// Filter chip widget (teal active)
+// ─────────────────────────────────────────────────────────
 class _FilterChip extends StatelessWidget {
   final String label;
   final bool selected;
   final VoidCallback onTap;
-  const _FilterChip({required this.label, required this.selected, required this.onTap});
+  const _FilterChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? FlokowerTheme.black : FlokowerTheme.offWhite,
+          color: selected ? FlokowerTheme.accentTeal : FlokowerTheme.white,
           borderRadius: BorderRadius.circular(20),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x0A000000),
+              blurRadius: 4,
+              offset: Offset(0, 2),
+            ),
+          ],
         ),
-        child: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: selected ? Colors.white : FlokowerTheme.darkGray)),
+        alignment: Alignment.center,
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: selected ? Colors.white : FlokowerTheme.darkGray,
+          ),
+        ),
       ),
     );
   }

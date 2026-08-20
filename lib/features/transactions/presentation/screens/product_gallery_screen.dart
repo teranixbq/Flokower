@@ -315,7 +315,7 @@ class _ProductGalleryScreenState extends ConsumerState<ProductGalleryScreen> {
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(50),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                   child: const Text(

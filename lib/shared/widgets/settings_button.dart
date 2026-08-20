@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../theme/flokower_theme.dart';
+import '../../services/migrate_r2_domain.dart';
+import 'toast.dart';
 
 /// Reusable Settings button for AppBar actions.
 /// Shows user info + logout menu.
@@ -38,6 +40,17 @@ class SettingsButton extends StatelessWidget {
             if (confirm == true) {
               await FirebaseAuth.instance.signOut();
             }
+          } else if (value == 'migrate') {
+            try {
+              await migrateR2Domain();
+              if (context.mounted) {
+                showToast(context, message: 'Migration selesai! Refresh halaman.', type: ToastType.success);
+              }
+            } catch (e) {
+              if (context.mounted) {
+                showToast(context, message: 'Migration gagal: $e', type: ToastType.error);
+              }
+            }
           }
         },
         itemBuilder: (context) => [
@@ -74,6 +87,16 @@ class SettingsButton extends StatelessWidget {
             ),
           ),
           const PopupMenuItem(enabled: false, height: 1, child: Divider(height: 1)),
+          const PopupMenuItem(
+            value: 'migrate',
+            child: Row(
+              children: [
+                Icon(Icons.swap_horiz_rounded, color: FlokowerTheme.accentTeal, size: 20),
+                SizedBox(width: 10),
+                Text('Migrate R2 Domain', style: TextStyle(fontWeight: FontWeight.w600)),
+              ],
+            ),
+          ),
           const PopupMenuItem(
             value: 'logout',
             child: Row(
