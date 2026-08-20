@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.example.flokower"
-    compileSdk = 35
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -22,7 +22,7 @@ android {
     defaultConfig {
         applicationId = "com.example.flokower"
         minSdk = 23
-        targetSdk = 35
+        targetSdk = 36
         versionCode = flutter.versionCode?.toInt() ?: 1
         versionName = flutter.versionName ?: "1.0"
 
